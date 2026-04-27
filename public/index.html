@@ -357,9 +357,11 @@
 
         let details;
         if (e.type === "success") {
-          details = e.timeLabel
-            ? `<span class="code">${e.timeLabel}</span>`
-            : `<span class="muted">—</span>`;
+          const times = (e.timeLabels ?? []).map(t => `<div class="code" style="margin-bottom:3px">${t}</div>`).join("");
+          const warns = (e.warnings  ?? []).map(w => `<div class="detail" style="color:#b45309">⚠ ${w}</div>`).join("");
+          details = (times || warns)
+            ? `${times}${warns}<div class="detail">${e.columns ?? 0} columns updated</div>`
+            : `<span class="muted">${e.columns ?? 0} columns updated</span>`;
         } else {
           details = `<span class="code">${e.code ?? "UNKNOWN"}</span>
             <div class="detail">${e.detail ?? ""}</div>`;

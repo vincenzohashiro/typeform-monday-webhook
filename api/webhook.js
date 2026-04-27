@@ -12,9 +12,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Invalid payload" });
   }
 
-  const answers                                    = form_response.answers ?? [];
-  const { colValues, searchValue, name, raw, timeLabels } = parseAnswers(answers);
-  const identifier                                 = searchValue ?? "(unknown)";
+  const answers                                                        = form_response.answers ?? [];
+  const { colValues, searchValue, name, raw, timeLabels, warnings }    = parseAnswers(answers);
+  const identifier                                                      = searchValue ?? "(unknown)";
 
   try {
     if (!searchValue) {
@@ -59,6 +59,7 @@ export default async function handler(req, res) {
       itemId:    item.id,
       itemName:  item.name,
       timeLabels,
+      warnings,
       columns:   Object.keys(colValues).length,
       raw,
     });
