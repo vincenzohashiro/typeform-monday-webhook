@@ -25,20 +25,21 @@ export default async function handler(req, res) {
     }
 
     // Find the Monday item by email
-    const searchCol = process.env.SEARCH_COLUMN ?? "email";
-    const item      = await findItem(searchCol, searchValue);
+    const item = await findItem("email_mkza7v62", searchValue);
 
     if (!item) {
       throw Object.assign(
-        new Error(`No Monday item found where [${searchCol}] = "${searchValue}"`),
+        new Error(`No Monday item found where [email_mkza7v62] = "${searchValue}"`),
         { code: "ITEM_NOT_FOUND" }
       );
     }
 
+    // Always set these two status columns on successful submission
+    colValues["color_mm0x1y1w"] = { label: "Yes" };
+    colValues["color_mkzbweje"] = { label: "Email 3 sendt" };
+
     // Update all mapped columns in one call
-    if (Object.keys(colValues).length) {
-      await updateItem(item.id, colValues);
-    }
+    await updateItem(item.id, colValues);
 
     // Post a summary comment
     await postUpdate(
