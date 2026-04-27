@@ -1,0 +1,12 @@
+{
+  "name": "typeform-monday-webhook",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@vercel/kv": "^1.0.0",
+    "luxon": "^3.4.4"
+  }
+}

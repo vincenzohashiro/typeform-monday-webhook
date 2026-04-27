@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Typeform → Monday.com</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f5f7;
+      color: #172b4d;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #dfe1e6;
+      padding: 0 28px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo { font-size: 20px; }
+    header h1 { font-size: 16px; font-weight: 600; flex: 1; }
+    .board-pill {
+      background: #f4f5f7;
+      border: 1px solid #dfe1e6;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-family: "SF Mono", "Fira Mono", monospace;
+      color: #5e6c84;
+    }
+    .live-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #36b37e;
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .webhook-bar {
+      background: #e8f0fe;
+      border-bottom: 1px solid #c5d5f8;
+      padding: 10px 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #1a56db;
+    }
+    .webhook-bar strong { white-space: nowrap; }
+    .webhook-url {
+      font-family: "SF Mono", "Fira Mono", monospace;
+      font-size: 12px;
+      background: #fff;
+      border: 1px solid #c5d5f8;
+      border-radius: 5px;
+      padding: 4px 10px;
+      flex: 1;
+      color: #172b4d;
+      cursor: pointer;
+      user-select: all;
+    }
+    .copy-btn {
+      background: #1a56db;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .copy-btn:hover { background: #1e429f; }
+
+    .banner {
+      margin: 20px 28px 0;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+    .banner.warn { background: #fffae6; border: 1px solid #f6c90e; color: #7a5c00; }
+    .banner.visible { display: block; }
+
+    main { padding: 20px 28px 40px; max-width: 1280px; margin: 0 auto; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .stat {
+      background: #fff;
+      border: 1px solid #dfe1e6;
+      border-radius: 10px;
+      padding: 20px 22px;
+    }
+    .stat .lbl {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #5e6c84;
+      margin-bottom: 8px;
+    }
+    .stat .val { font-size: 36px; font-weight: 700; line-height: 1; }
+    .stat.ok  .val { color: #36b37e; }
+    .stat.err .val { color: #de350b; }
+
+    .card {
+      background: #fff;
+      border: 1px solid #dfe1e6;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .card-head {
+      padding: 14px 20px;
+      border-bottom: 1px solid #dfe1e6;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-head h2 { font-size: 14px; font-weight: 600; }
+    .card-head .sub { font-size: 12px; color: #5e6c84; }
+
+    .col-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 1px;
+      background: #dfe1e6;
+    }
+    .col-item { background: #fff; padding: 12px 16px; }
+    .col-id {
+      font-family: "SF Mono", "Fira Mono", monospace;
+      font-size: 11px;
+      background: #f3f0ff;
+      color: #5243aa;
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .col-title { font-size: 13px; font-weight: 500; margin-top: 5px; }
+    .col-type  { font-size: 11px; color: #97a0af; text-transform: uppercase; margin-top: 2px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #5e6c84;
+      background: #f8f9fa;
+      border-bottom: 1px solid #dfe1e6;
+    }
+    tbody td {
+      padding: 11px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid #f0f1f3;
+      vertical-align: top;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #f8f9fa; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .badge.ok  { background: #e3fcef; color: #006644; }
+    .badge.err { background: #ffebe6; color: #bf2600; }
+
+    .code {
+      font-family: "SF Mono", "Fira Mono", monospace;
+      font-size: 11px;
+      background: #f4f5f7;
+      color: #5e6c84;
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .detail { font-size: 11px; color: #97a0af; margin-top: 4px; line-height: 1.4; }
+    .muted  { color: #97a0af; }
+
+    details summary {
+      font-size: 11px;
+      color: #5243aa;
+      cursor: pointer;
+      user-select: none;
+      margin-top: 6px;
+    }
+    details pre {
+      font-size: 10px;
+      background: #f4f5f7;
+      padding: 8px;
+      border-radius: 4px;
+      margin-top: 4px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #5e6c84;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 52px 20px;
+      color: #97a0af;
+      font-size: 13px;
+    }
+    .empty strong { display: block; font-size: 15px; margin-bottom: 6px; color: #5e6c84; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">⚡</span>
+  <h1>Typeform → Monday.com Sync</h1>
+  <span class="board-pill">Board 5089650058</span>
+  <div class="live-dot" title="Live"></div>
+</header>
+
+<div class="webhook-bar">
+  <strong>Typeform webhook URL:</strong>
+  <span class="webhook-url" id="webhookUrl"></span>
+  <button class="copy-btn" onclick="copyUrl()">Copy</button>
+</div>
+
+<div class="banner warn" id="tokenBanner">
+  ⚠️ <strong>MONDAY_API_KEY is not set.</strong> Add it as an environment variable in your Vercel project settings.
+</div>
+
+<main>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="lbl">Total processed</div>
+      <div class="val" id="sTotal">0</div>
+    </div>
+    <div class="stat ok">
+      <div class="lbl">Successful</div>
+      <div class="val" id="sOk">0</div>
+    </div>
+    <div class="stat err">
+      <div class="lbl">Failed</div>
+      <div class="val" id="sFail">0</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Board columns</h2>
+      <span class="sub">Use these IDs in Vercel environment variables to map your columns</span>
+    </div>
+    <div id="colGrid" class="col-grid">
+      <div class="empty" style="grid-column:1/-1; padding:32px"><span>Loading columns…</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Event log</h2>
+      <span class="sub" id="lastUpdate">Auto-refreshes every 10 s</span>
+    </div>
+    <div id="eventsWrap">
+      <div class="empty">
+        <strong>No events yet</strong>
+        Waiting for Typeform webhooks…
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // Show the webhook URL based on current domain
+  const webhookUrl = `${location.origin}/api/webhook`;
+  document.getElementById("webhookUrl").textContent = webhookUrl;
+
+  function copyUrl() {
+    navigator.clipboard.writeText(webhookUrl);
+    const btn = document.querySelector(".copy-btn");
+    btn.textContent = "Copied!";
+    setTimeout(() => btn.textContent = "Copy", 2000);
+  }
+
+  function fmt(ts) {
+    return new Date(ts).toLocaleString("da-DK", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+    });
+  }
+
+  async function loadColumns() {
+    try {
+      const r = await fetch("/api/columns");
+      const d = await r.json();
+      const grid = document.getElementById("colGrid");
+
+      if (!d.ok) {
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:28px">
+          <strong>Could not load columns</strong>${d.error}</div>`;
+        if (d.code === "NO_TOKEN") document.getElementById("tokenBanner").classList.add("visible");
+        return;
+      }
+
+      grid.innerHTML = d.columns.map(c => `
+        <div class="col-item">
+          <span class="col-id">${c.id}</span>
+          <div class="col-title">${c.title}</div>
+          <div class="col-type">${c.type}</div>
+        </div>`).join("");
+    } catch (e) {
+      document.getElementById("colGrid").innerHTML =
+        `<div class="empty" style="grid-column:1/-1">Network error: ${e.message}</div>`;
+    }
+  }
+
+  async function loadEvents() {
+    try {
+      const r      = await fetch("/api/events");
+      const events = await r.json();
+
+      document.getElementById("sTotal").textContent = events.length;
+      document.getElementById("sOk").textContent    = events.filter(e => e.type === "success").length;
+      document.getElementById("sFail").textContent  = events.filter(e => e.type === "failed").length;
+      document.getElementById("lastUpdate").textContent =
+        "Last refresh: " + new Date().toLocaleTimeString("da-DK");
+
+      const wrap = document.getElementById("eventsWrap");
+
+      if (!events.length) {
+        wrap.innerHTML = `<div class="empty"><strong>No events yet</strong>Waiting for Typeform webhooks…</div>`;
+        return;
+      }
+
+      const rows = events.map(e => {
+        const contact = e.name
+          ? `<strong>${e.name}</strong><br><span class="muted">${e.identifier ?? ""}</span>`
+          : `<span>${e.identifier ?? "—"}</span>`;
+
+        const status = e.type === "success"
+          ? `<span class="badge ok">Success</span>`
+          : `<span class="badge err">Failed</span>`;
+
+        const item = e.itemName
+          ? `${e.itemName}<br><span class="code">#${e.itemId}</span>`
+          : `<span class="muted">—</span>`;
+
+        let details;
+        if (e.type === "success") {
+          details = e.timeLabel
+            ? `<span class="code">${e.timeLabel}</span>`
+            : `<span class="muted">—</span>`;
+        } else {
+          details = `<span class="code">${e.code ?? "UNKNOWN"}</span>
+            <div class="detail">${e.detail ?? ""}</div>`;
+        }
+
+        const rawSection = e.raw?.length ? `
+          <details>
+            <summary>Typeform fields received (${e.raw.length})</summary>
+            <pre>${JSON.stringify(e.raw, null, 2)}</pre>
+          </details>` : "";
+
+        return `<tr>
+          <td style="white-space:nowrap;color:#5e6c84">${fmt(e.ts)}</td>
+          <td>${contact}${rawSection}</td>
+          <td>${status}</td>
+          <td style="font-size:13px">${item}</td>
+          <td>${details}</td>
+        </tr>`;
+      }).join("");
+
+      wrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th><th>Contact</th><th>Status</th><th>Monday item</th><th>Details / Reason</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    } catch (e) {
+      document.getElementById("lastUpdate").textContent = "Refresh failed: " + e.message;
+    }
+  }
+
+  loadColumns();
+  loadEvents();
+  setInterval(loadEvents, 10000);
+</script>
+
+</body>
+</html>
