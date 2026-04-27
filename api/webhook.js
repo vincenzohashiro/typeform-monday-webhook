@@ -41,15 +41,14 @@ export default async function handler(req, res) {
     // Update all mapped columns in one call
     await updateItem(item.id, colValues);
 
-    // Post a summary comment
+    // Post update comment
     await postUpdate(
       item.id,
       [
-        "**Typeform booking details updated**",
-        `Name: ${name ?? "N/A"}`,
-        `Contact: ${identifier}`,
+        "Form submitted on time ✅",
+        `Email sendt: ${identifier}`,
+        `Form submitted: Yes`,
         ...timeLabels,
-        `Submitted: ${form_response.submitted_at ?? new Date().toISOString()}`,
       ].join("\n")
     );
 

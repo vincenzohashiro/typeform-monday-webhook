@@ -35,8 +35,9 @@ export default async function handler(req, res) {
 
     await updateItem(item.id, colValues);
     await postUpdate(item.id, [
-      "**Typeform booking resent**",
-      `Contact: ${searchValue}`,
+      "Form submitted on time ✅ (resent)",
+      `Email sendt: ${searchValue}`,
+      `Form submitted: Yes`,
       ...timeLabels,
     ].join("\n"));
 
