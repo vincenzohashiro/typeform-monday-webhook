@@ -367,15 +367,20 @@
             <div class="detail">${e.detail ?? ""}</div>`;
         }
 
+        const resent  = e.resent ? `<span class="badge" style="background:#e0f2fe;color:#0369a1;margin-left:6px">resent</span>` : "";
         const rawSection = e.raw?.length ? `
           <details>
             <summary>Typeform fields received (${e.raw.length})</summary>
             <pre>${JSON.stringify(e.raw, null, 2)}</pre>
           </details>` : "";
 
+        const resendBtn = e.raw?.length
+          ? `<button class="resend-btn" onclick="resend(${e.id})" style="margin-top:6px;font-size:11px;padding:3px 8px;border:1px solid #dfe1e6;border-radius:4px;cursor:pointer;background:#fff">↺ Resend</button>`
+          : "";
+
         return `<tr>
           <td style="white-space:nowrap;color:#5e6c84">${fmt(e.ts)}</td>
-          <td>${contact}${rawSection}</td>
+          <td>${contact}${resent}${rawSection}${resendBtn}</td>
           <td>${status}</td>
           <td style="font-size:13px">${item}</td>
           <td>${details}</td>
@@ -393,6 +398,27 @@
         </table>`;
     } catch (e) {
       document.getElementById("lastUpdate").textContent = "Refresh failed: " + e.message;
+    }
+  }
+
+  async function resend(eventId) {
+    const btn = document.querySelector(`button[onclick="resend(${eventId})"]`);
+    if (btn) { btn.textContent = "Sending…"; btn.disabled = true; }
+    try {
+      const r = await fetch("/api/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId }),
+      });
+      const d = await r.json();
+      if (d.ok) {
+        if (btn) { btn.textContent = "✓ Sent"; btn.style.color = "#16a34a"; }
+        setTimeout(loadEvents, 1000);
+      } else {
+        if (btn) { btn.textContent = `✗ ${d.error}`; btn.style.color = "#dc2626"; btn.disabled = false; }
+      }
+    } catch (e) {
+      if (btn) { btn.textContent = "✗ Network error"; btn.style.color = "#dc2626"; btn.disabled = false; }
     }
   }
 
