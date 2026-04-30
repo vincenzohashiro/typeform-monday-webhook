@@ -77,8 +77,10 @@ export default async function handler(req, res) {
             await logEntry({ action: "deduplicated", itemId, itemName, boardId, eventId: existing.eventId });
             return res.json({ ok: true, action: "deduplicated", eventId: existing.eventId });
           } catch (updateErr) {
-            const status = updateErr.code ?? updateErr.status ?? updateErr?.errors?.[0]?.code;
-            const isGone = [404, 410, "404", "410"].includes(status) || /resource has been deleted|not found/i.test(updateErr.message ?? "");
+            const httpStatus = updateErr.response?.status ?? updateErr.code ?? updateErr.status;
+            const isGone = [404, 410].includes(Number(httpStatus))
+              || /resource has been deleted|not found|gone/i.test(updateErr.message ?? "")
+              || /resource has been deleted|not found/i.test(JSON.stringify(updateErr.response?.data ?? ""));
             if (!isGone) throw updateErr;
             // Event was manually deleted — clear the stale KV entry and create a fresh one below
             await kv.del(kvKey);
@@ -121,8 +123,10 @@ export default async function handler(req, res) {
       try {
         await updateCalendarEvent({ eventId: stored.eventId, title: itemName, dateStr, timeStr, description, calendarId: boardConfig.calendarId });
       } catch (updateErr) {
-        const status = updateErr.code ?? updateErr.status ?? updateErr?.errors?.[0]?.code;
-        const isGone = [404, 410, "404", "410"].includes(status) || /resource has been deleted|not found/i.test(updateErr.message ?? "");
+        const httpStatus = updateErr.response?.status ?? updateErr.code ?? updateErr.status;
+        const isGone = [404, 410].includes(Number(httpStatus))
+          || /resource has been deleted|not found|gone/i.test(updateErr.message ?? "")
+          || /resource has been deleted|not found/i.test(JSON.stringify(updateErr.response?.data ?? ""));
         if (!isGone) throw updateErr;
         // Stale KV entry — event was manually deleted, clear it and report cleanly
         await kv.del(kvKey);
