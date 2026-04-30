@@ -58,6 +58,10 @@ export default async function handler(req, res) {
       const newStatus = event.value?.label?.text;
 
       if (newStatus === STATUS_CREATE) {
+        // Idempotency: if an event already exists for this item, skip to prevent duplicates
+        const existing = await kv.get(kvKey);
+        if (existing?.eventId) return res.status(200).json({ ignored: "event already exists", eventId: existing.eventId });
+
         const allColumnIds = [boardConfig.dateColumnId, ...boardConfig.descriptionColumns.map(c => c.id)];
         const item = await getItemDetails(itemId, allColumnIds);
         if (!item) return res.status(200).json({ ignored: "item not found" });

@@ -340,7 +340,7 @@
   </div>
 
   <main>
-    <div class="stats">
+    <div class="stats" style="grid-template-columns: repeat(4, 1fr)">
       <div class="stat blue">
         <div class="lbl">Events created</div>
         <div class="val" id="cCreated">0</div>
@@ -352,6 +352,10 @@
       <div class="stat err">
         <div class="lbl">Events deleted</div>
         <div class="val" id="cDeleted">0</div>
+      </div>
+      <div class="stat err">
+        <div class="lbl">Failed</div>
+        <div class="val" id="cFailed">0</div>
       </div>
     </div>
 
@@ -541,6 +545,7 @@
       document.getElementById("cCreated").textContent = events.filter(e => e.action === "created").length;
       document.getElementById("cUpdated").textContent = events.filter(e => e.action === "updated").length;
       document.getElementById("cDeleted").textContent = events.filter(e => e.action === "deleted").length;
+      document.getElementById("cFailed").textContent  = events.filter(e => e.action === "error").length;
       document.getElementById("calLastUpdate").textContent = "Last refresh: " + new Date().toLocaleTimeString("da-DK");
 
       const wrap = document.getElementById("calEventsWrap");
