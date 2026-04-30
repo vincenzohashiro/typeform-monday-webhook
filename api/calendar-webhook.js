@@ -58,10 +58,6 @@ export default async function handler(req, res) {
       const newStatus = event.value?.label?.text;
 
       if (newStatus === STATUS_CREATE) {
-        // Idempotency: if an event already exists for this item, skip to prevent duplicates
-        const existing = await kv.get(kvKey);
-        if (existing?.eventId) return res.status(200).json({ ignored: "event already exists", eventId: existing.eventId });
-
         const allColumnIds = [boardConfig.dateColumnId, ...boardConfig.descriptionColumns.map(c => c.id)];
         const item = await getItemDetails(itemId, allColumnIds);
         if (!item) return res.status(200).json({ ignored: "item not found" });
@@ -71,8 +67,25 @@ export default async function handler(req, res) {
         if (!dateStr) return res.status(200).json({ ignored: "no date set on item" });
 
         const description = buildDescription(item.column_values, boardConfig.descriptionColumns);
-        const eventId = await createCalendarEvent({ title: itemName, dateStr, timeStr, description, calendarId: boardConfig.calendarId });
 
+        // Idempotency: if a KV entry exists, try updating the live event (deduplication for fast double-fires).
+        // If Google says it's gone (404/410), clear KV and fall through to create a fresh one.
+        const existing = await kv.get(kvKey);
+        if (existing?.eventId) {
+          try {
+            await updateCalendarEvent({ eventId: existing.eventId, title: itemName, dateStr, timeStr, description, calendarId: boardConfig.calendarId });
+            await logEntry({ action: "deduplicated", itemId, itemName, boardId, eventId: existing.eventId });
+            return res.json({ ok: true, action: "deduplicated", eventId: existing.eventId });
+          } catch (updateErr) {
+            const status = updateErr.code ?? updateErr.status ?? updateErr?.errors?.[0]?.code;
+            const isGone = [404, 410, "404", "410"].includes(status) || /resource has been deleted|not found/i.test(updateErr.message ?? "");
+            if (!isGone) throw updateErr;
+            // Event was manually deleted — clear the stale KV entry and create a fresh one below
+            await kv.del(kvKey);
+          }
+        }
+
+        const eventId = await createCalendarEvent({ title: itemName, dateStr, timeStr, description, calendarId: boardConfig.calendarId });
         await kv.set(kvKey, { eventId, boardId, createdAt: new Date().toISOString() });
         await logEntry({ action: "created", itemId, itemName, boardId, eventId });
         return res.json({ ok: true, action: "created", eventId });
@@ -105,7 +118,17 @@ export default async function handler(req, res) {
       const item = await getItemDetails(itemId, descColumnIds);
       const description = item ? buildDescription(item.column_values, boardConfig.descriptionColumns) : "";
 
-      await updateCalendarEvent({ eventId: stored.eventId, title: itemName, dateStr, timeStr, description, calendarId: boardConfig.calendarId });
+      try {
+        await updateCalendarEvent({ eventId: stored.eventId, title: itemName, dateStr, timeStr, description, calendarId: boardConfig.calendarId });
+      } catch (updateErr) {
+        const status = updateErr.code ?? updateErr.status ?? updateErr?.errors?.[0]?.code;
+        const isGone = [404, 410, "404", "410"].includes(status) || /resource has been deleted|not found/i.test(updateErr.message ?? "");
+        if (!isGone) throw updateErr;
+        // Stale KV entry — event was manually deleted, clear it and report cleanly
+        await kv.del(kvKey);
+        await logEntry({ action: "stale_cleared", itemId, itemName, boardId, eventId: stored.eventId });
+        return res.json({ ok: true, action: "stale_cleared", note: "Calendar event was already deleted; KV entry cleared" });
+      }
       await logEntry({ action: "updated", itemId, itemName, boardId, eventId: stored.eventId });
       return res.json({ ok: true, action: "updated" });
     }
