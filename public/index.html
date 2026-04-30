@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Typeform → Monday.com</title>
+  <title>Monday Integrations</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -25,15 +25,6 @@
     }
     .logo { font-size: 20px; }
     header h1 { font-size: 16px; font-weight: 600; flex: 1; }
-    .board-pill {
-      background: #f4f5f7;
-      border: 1px solid #dfe1e6;
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 12px;
-      font-family: "SF Mono", "Fira Mono", monospace;
-      color: #5e6c84;
-    }
     .live-dot {
       width: 8px; height: 8px;
       border-radius: 50%;
@@ -42,6 +33,32 @@
     }
     @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
+    /* ── Tabs ─────────────────────────────────────────────────────────────── */
+    .tabs {
+      background: #fff;
+      border-bottom: 1px solid #dfe1e6;
+      padding: 0 28px;
+      display: flex;
+      gap: 0;
+    }
+    .tab-btn {
+      padding: 14px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #5e6c84;
+      border: none;
+      border-bottom: 3px solid transparent;
+      background: none;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .tab-btn:hover { color: #172b4d; }
+    .tab-btn.active { color: #0052cc; border-bottom-color: #0052cc; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Info bars ────────────────────────────────────────────────────────── */
     .webhook-bar {
       background: #e8f0fe;
       border-bottom: 1px solid #c5d5f8;
@@ -89,6 +106,7 @@
 
     main { padding: 20px 28px 40px; max-width: 1280px; margin: 0 auto; }
 
+    /* ── Stats ────────────────────────────────────────────────────────────── */
     .stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -109,9 +127,12 @@
       margin-bottom: 8px;
     }
     .stat .val { font-size: 36px; font-weight: 700; line-height: 1; }
-    .stat.ok  .val { color: #36b37e; }
-    .stat.err .val { color: #de350b; }
+    .stat.ok   .val { color: #36b37e; }
+    .stat.err  .val { color: #de350b; }
+    .stat.blue .val { color: #0052cc; }
+    .stat.warn .val { color: #ff8b00; }
 
+    /* ── Cards ────────────────────────────────────────────────────────────── */
     .card {
       background: #fff;
       border: 1px solid #dfe1e6;
@@ -177,8 +198,11 @@
       text-transform: uppercase;
       letter-spacing: .04em;
     }
-    .badge.ok  { background: #e3fcef; color: #006644; }
-    .badge.err { background: #ffebe6; color: #bf2600; }
+    .badge.ok      { background: #e3fcef; color: #006644; }
+    .badge.err     { background: #ffebe6; color: #bf2600; }
+    .badge.created { background: #e3fcef; color: #006644; }
+    .badge.updated { background: #e0f2fe; color: #0369a1; }
+    .badge.deleted { background: #ffebe6; color: #bf2600; }
 
     .code {
       font-family: "SF Mono", "Fira Mono", monospace;
@@ -217,79 +241,177 @@
       font-size: 13px;
     }
     .empty strong { display: block; font-size: 15px; margin-bottom: 6px; color: #5e6c84; }
+
+    /* ── Calendar board info grid ─────────────────────────────────────────── */
+    .board-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: #dfe1e6;
+    }
+    .board-cell {
+      background: #fff;
+      padding: 16px 20px;
+    }
+    .board-cell h3 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #172b4d; }
+    .board-cell .field { margin-bottom: 6px; font-size: 12px; color: #5e6c84; }
+    .board-cell .field strong { color: #172b4d; }
   </style>
 </head>
 <body>
 
 <header>
   <span class="logo">⚡</span>
-  <h1>Typeform → Monday.com Sync</h1>
-  <span class="board-pill">Board 5089650058</span>
+  <h1>Monday Integrations</h1>
   <div class="live-dot" title="Live"></div>
 </header>
 
-<div class="webhook-bar">
-  <strong>Typeform webhook URL:</strong>
-  <span class="webhook-url" id="webhookUrl"></span>
-  <button class="copy-btn" onclick="copyUrl()">Copy</button>
-</div>
+<nav class="tabs">
+  <button class="tab-btn active" onclick="switchTab('typeform', this)">Typeform → Monday</button>
+  <button class="tab-btn"        onclick="switchTab('calendar', this)">Google Calendar Sync</button>
+</nav>
 
-<div class="banner warn" id="tokenBanner">
-  ⚠️ <strong>MONDAY_API_KEY is not set.</strong> Add it as an environment variable in your Vercel project settings.
-</div>
+<!-- ══════════════════════════════════════════════════════════════════════════
+     TAB 1 — Typeform
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-typeform" class="tab-panel active">
 
-<main>
-
-  <div class="stats">
-    <div class="stat">
-      <div class="lbl">Total processed</div>
-      <div class="val" id="sTotal">0</div>
-    </div>
-    <div class="stat ok">
-      <div class="lbl">Successful</div>
-      <div class="val" id="sOk">0</div>
-    </div>
-    <div class="stat err">
-      <div class="lbl">Failed</div>
-      <div class="val" id="sFail">0</div>
-    </div>
+  <div class="webhook-bar">
+    <strong>Typeform webhook URL:</strong>
+    <span class="webhook-url" id="webhookUrl"></span>
+    <button class="copy-btn" onclick="copyUrl('webhookUrl', this)">Copy</button>
   </div>
 
-  <div class="card">
-    <div class="card-head">
-      <h2>Board columns</h2>
-      <span class="sub">Use these IDs in Vercel environment variables to map your columns</span>
-    </div>
-    <div id="colGrid" class="col-grid">
-      <div class="empty" style="grid-column:1/-1; padding:32px"><span>Loading columns…</span></div>
-    </div>
+  <div class="banner warn" id="tokenBanner">
+    ⚠️ <strong>MONDAY_API_KEY is not set.</strong> Add it as an environment variable in your Vercel project settings.
   </div>
 
-  <div class="card">
-    <div class="card-head">
-      <h2>Event log</h2>
-      <span class="sub" id="lastUpdate">Auto-refreshes every 10 s</span>
-    </div>
-    <div id="eventsWrap">
-      <div class="empty">
-        <strong>No events yet</strong>
-        Waiting for Typeform webhooks…
+  <main>
+    <div class="stats">
+      <div class="stat">
+        <div class="lbl">Total processed</div>
+        <div class="val" id="sTotal">0</div>
+      </div>
+      <div class="stat ok">
+        <div class="lbl">Successful</div>
+        <div class="val" id="sOk">0</div>
+      </div>
+      <div class="stat err">
+        <div class="lbl">Failed</div>
+        <div class="val" id="sFail">0</div>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Board columns</h2>
+        <span class="sub">Use these IDs to map your columns</span>
+      </div>
+      <div id="colGrid" class="col-grid">
+        <div class="empty" style="grid-column:1/-1; padding:32px"><span>Loading columns…</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Event log</h2>
+        <span class="sub" id="tfLastUpdate">Auto-refreshes every 10 s</span>
+      </div>
+      <div id="eventsWrap">
+        <div class="empty">
+          <strong>No events yet</strong>
+          Waiting for Typeform webhooks…
+        </div>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     TAB 2 — Google Calendar Sync
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-calendar" class="tab-panel">
+
+  <div class="webhook-bar">
+    <strong>Monday webhook URL:</strong>
+    <span class="webhook-url" id="calWebhookUrl"></span>
+    <button class="copy-btn" onclick="copyUrl('calWebhookUrl', this)">Copy</button>
   </div>
 
-</main>
+  <main>
+    <div class="stats">
+      <div class="stat blue">
+        <div class="lbl">Events created</div>
+        <div class="val" id="cCreated">0</div>
+      </div>
+      <div class="stat warn">
+        <div class="lbl">Events updated</div>
+        <div class="val" id="cUpdated">0</div>
+      </div>
+      <div class="stat err">
+        <div class="lbl">Events deleted</div>
+        <div class="val" id="cDeleted">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Board configuration</h2>
+        <span class="sub">Monday webhooks must be registered for both boards</span>
+      </div>
+      <div class="board-grid">
+        <div class="board-cell">
+          <h3>Board 2 — 5089650058</h3>
+          <div class="field">Status column: <strong><span class="code">color_mm2xkj25</span></strong> (Event Creator)</div>
+          <div class="field">Date column: <strong><span class="code">date_mkzancw6</span></strong> (Næste opkald)</div>
+          <div class="field">Description: Email, Telefonnummer</div>
+          <div class="field">Trigger: <span class="badge created">Event Created</span> &nbsp; <span class="badge deleted">Event Delete</span></div>
+        </div>
+        <div class="board-cell">
+          <h3>Board 3 — 5052958230</h3>
+          <div class="field">Status column: <strong><span class="code">color_mm2xy0y7</span></strong> (Event Creator)</div>
+          <div class="field">Date column: <strong><span class="code">date_mkxmb3rn</span></strong> (Operationsdato)</div>
+          <div class="field">Description: Telefon, Email</div>
+          <div class="field">Trigger: <span class="badge created">Event Created</span> &nbsp; <span class="badge deleted">Event Delete</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Calendar sync log</h2>
+        <span class="sub" id="calLastUpdate">Auto-refreshes every 10 s</span>
+      </div>
+      <div id="calEventsWrap">
+        <div class="empty">
+          <strong>No sync events yet</strong>
+          Set "Event Created" on a Monday item to trigger a sync…
+        </div>
+      </div>
+    </div>
+  </main>
+
+</div>
 
 <script>
-  // Show the webhook URL based on current domain
-  const webhookUrl = `${location.origin}/api/webhook`;
-  document.getElementById("webhookUrl").textContent = webhookUrl;
+  // ── Tab switching ──────────────────────────────────────────────────────────
+  function switchTab(name, btn) {
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById("tab-" + name).classList.add("active");
+    btn.classList.add("active");
+  }
 
-  function copyUrl() {
-    navigator.clipboard.writeText(webhookUrl);
-    const btn = document.querySelector(".copy-btn");
+  // ── Webhook URLs ───────────────────────────────────────────────────────────
+  document.getElementById("webhookUrl").textContent    = `${location.origin}/api/webhook`;
+  document.getElementById("calWebhookUrl").textContent = `${location.origin}/api/calendar-webhook`;
+
+  function copyUrl(id, btn) {
+    navigator.clipboard.writeText(document.getElementById(id).textContent);
+    const orig = btn.textContent;
     btn.textContent = "Copied!";
-    setTimeout(() => btn.textContent = "Copy", 2000);
+    setTimeout(() => btn.textContent = orig, 2000);
   }
 
   function fmt(ts) {
@@ -299,19 +421,18 @@
     });
   }
 
+  // ── Typeform tab ───────────────────────────────────────────────────────────
   async function loadColumns() {
     try {
       const r = await fetch("/api/columns");
       const d = await r.json();
       const grid = document.getElementById("colGrid");
-
       if (!d.ok) {
         grid.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:28px">
           <strong>Could not load columns</strong>${d.error}</div>`;
         if (d.code === "NO_TOKEN") document.getElementById("tokenBanner").classList.add("visible");
         return;
       }
-
       grid.innerHTML = d.columns.map(c => `
         <div class="col-item">
           <span class="col-id">${c.id}</span>
@@ -332,11 +453,9 @@
       document.getElementById("sTotal").textContent = events.length;
       document.getElementById("sOk").textContent    = events.filter(e => e.type === "success").length;
       document.getElementById("sFail").textContent  = events.filter(e => e.type === "failed").length;
-      document.getElementById("lastUpdate").textContent =
-        "Last refresh: " + new Date().toLocaleTimeString("da-DK");
+      document.getElementById("tfLastUpdate").textContent = "Last refresh: " + new Date().toLocaleTimeString("da-DK");
 
       const wrap = document.getElementById("eventsWrap");
-
       if (!events.length) {
         wrap.innerHTML = `<div class="empty"><strong>No events yet</strong>Waiting for Typeform webhooks…</div>`;
         return;
@@ -346,15 +465,12 @@
         const contact = e.name
           ? `<strong>${e.name}</strong><br><span class="muted">${e.identifier ?? ""}</span>`
           : `<span>${e.identifier ?? "—"}</span>`;
-
         const status = e.type === "success"
           ? `<span class="badge ok">Success</span>`
           : `<span class="badge err">Failed</span>`;
-
         const item = e.itemName
           ? `${e.itemName}<br><span class="code">#${e.itemId}</span>`
           : `<span class="muted">—</span>`;
-
         let details;
         if (e.type === "success") {
           const times = (e.timeLabels ?? []).map(t => `<div class="code" style="margin-bottom:3px">${t}</div>`).join("");
@@ -363,21 +479,17 @@
             ? `${times}${warns}<div class="detail">${e.columns ?? 0} columns updated</div>`
             : `<span class="muted">${e.columns ?? 0} columns updated</span>`;
         } else {
-          details = `<span class="code">${e.code ?? "UNKNOWN"}</span>
-            <div class="detail">${e.detail ?? ""}</div>`;
+          details = `<span class="code">${e.code ?? "UNKNOWN"}</span><div class="detail">${e.detail ?? ""}</div>`;
         }
-
-        const resent  = e.resent ? `<span class="badge" style="background:#e0f2fe;color:#0369a1;margin-left:6px">resent</span>` : "";
+        const resent = e.resent ? `<span class="badge" style="background:#e0f2fe;color:#0369a1;margin-left:6px">resent</span>` : "";
         const rawSection = e.raw?.length ? `
           <details>
             <summary>Typeform fields received (${e.raw.length})</summary>
             <pre>${JSON.stringify(e.raw, null, 2)}</pre>
           </details>` : "";
-
         const resendBtn = e.raw?.length
           ? `<button class="resend-btn" onclick="resend(${e.id})" style="margin-top:6px;font-size:11px;padding:3px 8px;border:1px solid #dfe1e6;border-radius:4px;cursor:pointer;background:#fff">↺ Resend</button>`
           : "";
-
         return `<tr>
           <td style="white-space:nowrap;color:#5e6c84">${fmt(e.ts)}</td>
           <td>${contact}${resent}${rawSection}${resendBtn}</td>
@@ -389,15 +501,13 @@
 
       wrap.innerHTML = `
         <table>
-          <thead>
-            <tr>
-              <th>Time</th><th>Contact</th><th>Status</th><th>Monday item</th><th>Details / Reason</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>Time</th><th>Contact</th><th>Status</th><th>Monday item</th><th>Details / Reason</th>
+          </tr></thead>
           <tbody>${rows}</tbody>
         </table>`;
     } catch (e) {
-      document.getElementById("lastUpdate").textContent = "Refresh failed: " + e.message;
+      document.getElementById("tfLastUpdate").textContent = "Refresh failed: " + e.message;
     }
   }
 
@@ -422,9 +532,59 @@
     }
   }
 
+  // ── Calendar tab ───────────────────────────────────────────────────────────
+  async function loadCalendarEvents() {
+    try {
+      const r      = await fetch("/api/calendar-events");
+      const events = await r.json();
+
+      document.getElementById("cCreated").textContent = events.filter(e => e.action === "created").length;
+      document.getElementById("cUpdated").textContent = events.filter(e => e.action === "updated").length;
+      document.getElementById("cDeleted").textContent = events.filter(e => e.action === "deleted").length;
+      document.getElementById("calLastUpdate").textContent = "Last refresh: " + new Date().toLocaleTimeString("da-DK");
+
+      const wrap = document.getElementById("calEventsWrap");
+      if (!events.length) {
+        wrap.innerHTML = `<div class="empty"><strong>No sync events yet</strong>Set "Event Created" on a Monday item to trigger a sync…</div>`;
+        return;
+      }
+
+      const BOARD_NAMES = { "5089650058": "Board 2", "5052958230": "Board 3" };
+
+      const actionBadge = a => ({
+        created: `<span class="badge created">Created</span>`,
+        updated: `<span class="badge updated">Updated</span>`,
+        deleted: `<span class="badge deleted">Deleted</span>`,
+        error:   `<span class="badge err">Error</span>`,
+      }[a] ?? `<span class="badge">${a}</span>`);
+
+      const rows = events.map(e => `
+        <tr>
+          <td style="white-space:nowrap;color:#5e6c84">${fmt(e.ts)}</td>
+          <td><strong>${e.itemName || "—"}</strong><br><span class="code">#${e.itemId}</span></td>
+          <td>${actionBadge(e.action)}</td>
+          <td>${BOARD_NAMES[e.boardId] ?? e.boardId}</td>
+          <td>${e.eventId ? `<span class="code">${e.eventId.slice(0, 20)}…</span>` : e.error ? `<span class="detail" style="color:#de350b">${e.error}</span>` : "—"}</td>
+        </tr>`).join("");
+
+      wrap.innerHTML = `
+        <table>
+          <thead><tr>
+            <th>Time</th><th>Monday item</th><th>Action</th><th>Board</th><th>Calendar event ID / Error</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    } catch (e) {
+      document.getElementById("calLastUpdate").textContent = "Refresh failed: " + e.message;
+    }
+  }
+
+  // ── Boot ───────────────────────────────────────────────────────────────────
   loadColumns();
   loadEvents();
+  loadCalendarEvents();
   setInterval(loadEvents, 10000);
+  setInterval(loadCalendarEvents, 10000);
 </script>
 
 </body>
