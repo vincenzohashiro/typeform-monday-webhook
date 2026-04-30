@@ -1,5 +1,5 @@
 import { kv } from "@vercel/kv";
-import { BOARDS, STATUS_CREATE, STATUS_DELETE, CALENDAR_ID } from "../lib/calendarBoards.js";
+import { BOARDS, STATUS_CREATE, STATUS_DELETE } from "../lib/calendarBoards.js";
 import { getItemDetails } from "../lib/monday.js";
 import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from "../lib/googleCalendar.js";
 
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
         if (!dateStr) return res.status(200).json({ ignored: "no date set on item" });
 
         const description = buildDescription(item.column_values, boardConfig.descriptionColumns);
-        const eventId = await createCalendarEvent({ title: itemName, dateStr, timeStr, description, calendarId: CALENDAR_ID });
+        const eventId = await createCalendarEvent({ title: itemName, dateStr, timeStr, description, calendarId: boardConfig.calendarId });
 
         await kv.set(kvKey, { eventId, boardId, createdAt: new Date().toISOString() });
         await logEntry({ action: "created", itemId, itemName, boardId, eventId });
@@ -77,7 +77,7 @@ export default async function handler(req, res) {
       if (newStatus === STATUS_DELETE) {
         const stored = await kv.get(kvKey);
         if (stored?.eventId) {
-          await deleteCalendarEvent({ eventId: stored.eventId, calendarId: CALENDAR_ID });
+          await deleteCalendarEvent({ eventId: stored.eventId, calendarId: boardConfig.calendarId });
           await kv.del(kvKey);
           await logEntry({ action: "deleted", itemId, itemName, boardId, eventId: stored.eventId });
         }
@@ -101,7 +101,7 @@ export default async function handler(req, res) {
       const item = await getItemDetails(itemId, descColumnIds);
       const description = item ? buildDescription(item.column_values, boardConfig.descriptionColumns) : "";
 
-      await updateCalendarEvent({ eventId: stored.eventId, title: itemName, dateStr, timeStr, description, calendarId: CALENDAR_ID });
+      await updateCalendarEvent({ eventId: stored.eventId, title: itemName, dateStr, timeStr, description, calendarId: boardConfig.calendarId });
       await logEntry({ action: "updated", itemId, itemName, boardId, eventId: stored.eventId });
       return res.json({ ok: true, action: "updated" });
     }
