@@ -38,8 +38,14 @@ export default async function handler(req, res) {
     colValues["color_mm0x1y1w"] = { label: "Yes" };
     colValues["color_mkzbweje"] = { label: "Email 3 sendt" };
 
-    // Update all mapped columns in one call
-    await updateItem(item.id, colValues);
+    // Update all mapped columns — falls back to per-column on validation errors
+    const { failed } = await updateItem(item.id, colValues);
+
+    const colFailWarnings = failed.map(f => {
+      const info = colLabels[f.id];
+      return `${info?.label ?? f.id} (${f.id}): ${f.error}`;
+    });
+    const allWarnings = [...warnings, ...colFailWarnings];
 
     // Post update comment
     await postUpdate(
@@ -49,6 +55,7 @@ export default async function handler(req, res) {
         `Email sendt: ${identifier}`,
         `Form submitted: Yes`,
         ...timeLabels,
+        ...(colFailWarnings.length ? [`⚠ Column errors: ${colFailWarnings.join("; ")}`] : []),
       ].join("\n")
     );
 
@@ -59,12 +66,12 @@ export default async function handler(req, res) {
       itemId:    item.id,
       itemName:  item.name,
       timeLabels,
-      warnings,
-      columns:   Object.keys(colValues).length,
+      warnings:  allWarnings,
+      columns:   Object.keys(colValues).length - failed.length,
       raw,
     });
 
-    res.json({ ok: true, itemId: item.id, columnsUpdated: Object.keys(colValues).length });
+    res.json({ ok: true, itemId: item.id, columnsUpdated: Object.keys(colValues).length - failed.length, columnsFailed: failed.length });
 
   } catch (err) {
     await saveEvent({
