@@ -493,7 +493,17 @@
             ? `${times}${warns}<div class="detail">${e.columns ?? 0} columns updated</div>`
             : `<span class="muted">${e.columns ?? 0} columns updated</span>`;
         } else {
-          details = `<span class="code">${e.code ?? "UNKNOWN"}</span><div class="detail">${e.detail ?? ""}</div>`;
+          const colInfo = e.colLabels
+            ? Object.entries(e.colLabels).map(([id, c]) =>
+                `<div class="detail" style="margin-top:3px">
+                  <span class="code">${c.label}</span>
+                  <span class="muted"> → </span>
+                  <span class="code" style="background:#fff0f0;color:#bf2600">${c.raw}</span>
+                  <span class="muted" style="font-size:10px"> (${id})</span>
+                </div>`
+              ).join("")
+            : "";
+          details = `<span class="code">${e.code ?? "UNKNOWN"}</span><div class="detail" style="margin-top:4px">${e.detail ?? ""}</div>${colInfo}`;
         }
         const resent = e.resent ? `<span class="badge" style="background:#e0f2fe;color:#0369a1;margin-left:6px">resent</span>` : "";
         const rawSection = e.raw?.length ? `

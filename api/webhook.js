@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   const answers                                                        = form_response.answers ?? [];
-  const { colValues, searchValue, name, raw, timeLabels, warnings }    = parseAnswers(answers);
+  const { colValues, colLabels, searchValue, name, raw, timeLabels, warnings } = parseAnswers(answers);
   const identifier                                                      = searchValue ?? "(unknown)";
 
   try {
@@ -68,11 +68,12 @@ export default async function handler(req, res) {
 
   } catch (err) {
     await saveEvent({
-      type:   "failed",
+      type:      "failed",
       identifier,
       name,
-      code:   err.code ?? "UNKNOWN",
-      detail: err.message,
+      code:      err.code ?? "UNKNOWN",
+      detail:    err.message,
+      colLabels,
       raw,
     });
     res.status(500).json({ error: err.message, code: err.code });
