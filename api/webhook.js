@@ -12,8 +12,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Invalid payload" });
   }
 
+  // Idempotency: skip if we already successfully processed this form response
+  const responseToken = form_response.token;
+  if (responseToken) {
+    const already = await kv.get(`tf_token:${responseToken}`);
+    if (already) return res.status(200).json({ ignored: "already processed", token: responseToken });
+  }
+
   const answers                                                        = form_response.answers ?? [];
   const { colValues, colLabels, searchValue, name, raw, timeLabels, warnings } = parseAnswers(answers);
+  if (responseToken) raw.push({ ref: "__token__", value: responseToken });
   const identifier                                                      = searchValue ?? "(unknown)";
 
   try {
@@ -71,6 +79,11 @@ export default async function handler(req, res) {
       raw,
     });
 
+    // Mark this response as processed so Typeform retries are ignored
+    if (responseToken) {
+      await kv.set(`tf_token:${responseToken}`, 1, { ex: 60 * 60 * 24 * 30 }); // 30-day TTL
+    }
+
     res.json({ ok: true, itemId: item.id, columnsUpdated: Object.keys(colValues).length - failed.length, columnsFailed: failed.length });
 
   } catch (err) {
@@ -83,7 +96,10 @@ export default async function handler(req, res) {
       colLabels,
       raw,
     });
-    res.status(500).json({ error: err.message, code: err.code });
+    // Return 200 for business logic failures so Typeform stops retrying.
+    // Return 500 only for unexpected server errors (Monday/KV down) so Typeform will retry.
+    const isBusinessError = ["ITEM_NOT_FOUND", "INVALID_PAYLOAD"].includes(err.code);
+    res.status(isBusinessError ? 200 : 500).json({ error: err.message, code: err.code });
   }
 }
 

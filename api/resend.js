@@ -41,6 +41,10 @@ export default async function handler(req, res) {
       ...timeLabels,
     ].join("\n"));
 
+    // Mark the original token as processed so any pending Typeform retries are ignored
+    const token = event.raw?.find?.(f => f.ref === "__token__")?.value ?? null;
+    if (token) await kv.set(`tf_token:${token}`, 1, { ex: 60 * 60 * 24 * 30 });
+
     // Log the resend
     await kv.lpush("events", JSON.stringify({
       id:        Date.now(),
