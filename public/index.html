@@ -485,22 +485,28 @@
         const item = e.itemName
           ? `${e.itemName}<br><span class="code">#${e.itemId}</span>`
           : `<span class="muted">—</span>`;
+        const colRow = (label, raw, note, bg = "#fff0f0", fg = "#bf2600") =>
+          `<div class="detail" style="margin-top:3px">
+            <span class="code">${label}</span>
+            <span class="muted"> → </span>
+            <span class="code" style="background:${bg};color:${fg}">${raw}</span>
+            ${note ? `<span class="muted" style="font-size:10px"> ${note}</span>` : ""}
+          </div>`;
+
         let details;
         if (e.type === "success") {
           const times = (e.timeLabels ?? []).map(t => `<div class="code" style="margin-bottom:3px">${t}</div>`).join("");
-          const warns = (e.warnings  ?? []).map(w => `<div class="detail" style="color:#b45309">⚠ ${w}</div>`).join("");
-          details = (times || warns)
-            ? `${times}${warns}<div class="detail">${e.columns ?? 0} columns updated</div>`
-            : `<span class="muted">${e.columns ?? 0} columns updated</span>`;
+          const failedColRows = (e.failedCols ?? []).map(f =>
+            colRow(f.label, f.raw, `(${f.id}): ${f.error}`)
+          ).join("");
+          const extraWarns = (e.warnings ?? [])
+            .filter(w => !(e.failedCols ?? []).some(f => w.startsWith(f.label)))
+            .map(w => `<div class="detail" style="color:#b45309">⚠ ${w}</div>`).join("");
+          details = `${times}${failedColRows}${extraWarns}<div class="detail" style="margin-top:4px">${e.columns ?? 0} columns updated${(e.failedCols?.length ?? 0) > 0 ? `, ${e.failedCols.length} failed` : ""}</div>`;
         } else {
           const colInfo = e.colLabels
             ? Object.entries(e.colLabels).map(([id, c]) =>
-                `<div class="detail" style="margin-top:3px">
-                  <span class="code">${c.label}</span>
-                  <span class="muted"> → </span>
-                  <span class="code" style="background:#fff0f0;color:#bf2600">${c.raw}</span>
-                  <span class="muted" style="font-size:10px"> (${id})</span>
-                </div>`
+                colRow(c.label, c.raw, `(${id})`)
               ).join("")
             : "";
           details = `<span class="code">${e.code ?? "UNKNOWN"}</span><div class="detail" style="margin-top:4px">${e.detail ?? ""}</div>${colInfo}`;

@@ -55,6 +55,14 @@ export default async function handler(req, res) {
     });
     const allWarnings = [...warnings, ...colFailWarnings];
 
+    // Structured failed-column data for rich UI display
+    const failedCols = failed.map(f => ({
+      id:    f.id,
+      label: colLabels[f.id]?.label ?? f.id,
+      raw:   colLabels[f.id]?.raw   ?? "?",
+      error: f.error,
+    }));
+
     // Post update comment
     await postUpdate(
       item.id,
@@ -68,14 +76,15 @@ export default async function handler(req, res) {
     );
 
     await saveEvent({
-      type:      "success",
+      type:       "success",
       identifier,
       name,
-      itemId:    item.id,
-      itemName:  item.name,
+      itemId:     item.id,
+      itemName:   item.name,
       timeLabels,
-      warnings:  allWarnings,
-      columns:   Object.keys(colValues).length - failed.length,
+      warnings:   allWarnings,
+      failedCols,
+      columns:    Object.keys(colValues).length - failed.length,
       raw,
     });
 
