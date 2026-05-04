@@ -256,6 +256,33 @@
     .board-cell h3 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #172b4d; }
     .board-cell .field { margin-bottom: 6px; font-size: 12px; color: #5e6c84; }
     .board-cell .field strong { color: #172b4d; }
+
+    .refresh-btn {
+      background: none;
+      border: 1px solid #dfe1e6;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #5e6c84;
+      transition: background .15s;
+    }
+    .refresh-btn:hover { background: #f4f5f7; }
+    .refresh-btn:disabled { opacity: .5; cursor: default; }
+
+    .reset-btn {
+      display: inline-block;
+      margin-top: 10px;
+      background: none;
+      border: 1px solid #de350b55;
+      border-radius: 4px;
+      padding: 3px 9px;
+      font-size: 10px;
+      cursor: pointer;
+      color: #de350b;
+      letter-spacing: .03em;
+    }
+    .reset-btn:hover { background: #ffebe6; }
   </style>
 </head>
 <body>
@@ -263,6 +290,7 @@
 <header>
   <span class="logo">⚡</span>
   <h1>Monday Integrations</h1>
+  <button id="refreshBtn" class="refresh-btn" onclick="refreshCurrentTab()">↺ Refresh</button>
   <div class="live-dot" title="Live"></div>
 </header>
 
@@ -300,6 +328,7 @@
       <div class="stat err">
         <div class="lbl">Failed</div>
         <div class="val" id="sFail">0</div>
+        <button class="reset-btn" onclick="resetFailed('typeform')">Reset counter</button>
       </div>
     </div>
 
@@ -357,6 +386,7 @@
       <div class="stat err">
         <div class="lbl">Failed</div>
         <div class="val" id="cFailed">0</div>
+        <button class="reset-btn" onclick="resetFailed('calendar')">Reset counter</button>
       </div>
     </div>
 
@@ -429,6 +459,7 @@
       <div class="stat err">
         <div class="lbl">Failed</div>
         <div class="val" id="mFailed">0</div>
+        <button class="reset-btn" onclick="resetFailed('meta')">Reset counter</button>
       </div>
       <div class="stat">
         <div class="lbl">Total</div>
@@ -454,11 +485,30 @@
 
 <script>
   // ── Tab switching ──────────────────────────────────────────────────────────
+  let currentTab = "typeform";
   function switchTab(name, btn) {
+    currentTab = name;
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     document.getElementById("tab-" + name).classList.add("active");
     btn.classList.add("active");
+  }
+
+  function refreshCurrentTab() {
+    const btn = document.getElementById("refreshBtn");
+    btn.textContent = "↺ Refreshing…";
+    btn.disabled = true;
+    const done = () => { btn.textContent = "↺ Refresh"; btn.disabled = false; };
+    if      (currentTab === "typeform") Promise.all([loadColumns(), loadEvents()]).finally(done);
+    else if (currentTab === "calendar") loadCalendarEvents().finally(done);
+    else if (currentTab === "meta")     loadMetaEvents().finally(done);
+  }
+
+  async function resetFailed(tab) {
+    await fetch(`/api/reset-failed?tab=${tab}`, { method: "POST" });
+    if      (tab === "typeform") loadEvents();
+    else if (tab === "calendar") loadCalendarEvents();
+    else if (tab === "meta")     loadMetaEvents();
   }
 
   // ── Webhook URLs ───────────────────────────────────────────────────────────
@@ -505,12 +555,12 @@
 
   async function loadEvents() {
     try {
-      const r      = await fetch("/api/events");
-      const events = await r.json();
+      const r                      = await fetch("/api/events");
+      const { events, failedResetTs } = await r.json();
 
       document.getElementById("sTotal").textContent = events.length;
       document.getElementById("sOk").textContent    = events.filter(e => e.type === "success").length;
-      document.getElementById("sFail").textContent  = events.filter(e => e.type === "failed").length;
+      document.getElementById("sFail").textContent  = events.filter(e => e.type === "failed" && (!failedResetTs || e.ts > failedResetTs)).length;
       document.getElementById("tfLastUpdate").textContent = "Last refresh: " + new Date().toLocaleTimeString("da-DK");
 
       const wrap = document.getElementById("eventsWrap");
@@ -609,13 +659,13 @@
   // ── Calendar tab ───────────────────────────────────────────────────────────
   async function loadCalendarEvents() {
     try {
-      const r      = await fetch("/api/calendar-events");
-      const events = await r.json();
+      const r                      = await fetch("/api/calendar-events");
+      const { events, failedResetTs } = await r.json();
 
       document.getElementById("cCreated").textContent = events.filter(e => e.action === "created").length;
       document.getElementById("cUpdated").textContent = events.filter(e => e.action === "updated").length;
       document.getElementById("cDeleted").textContent = events.filter(e => e.action === "deleted").length;
-      document.getElementById("cFailed").textContent  = events.filter(e => e.action === "error").length;
+      document.getElementById("cFailed").textContent  = events.filter(e => e.action === "error" && (!failedResetTs || e.ts > failedResetTs)).length;
       document.getElementById("calLastUpdate").textContent = "Last refresh: " + new Date().toLocaleTimeString("da-DK");
 
       const wrap = document.getElementById("calEventsWrap");
@@ -659,11 +709,11 @@
 
   async function loadMetaEvents() {
     try {
-      const r      = await fetch("/api/meta-events");
-      const events = await r.json();
+      const r                      = await fetch("/api/meta-events");
+      const { events, failedResetTs } = await r.json();
 
       document.getElementById("mCreated").textContent = events.filter(e => e.action === "created").length;
-      document.getElementById("mFailed").textContent  = events.filter(e => e.action === "error").length;
+      document.getElementById("mFailed").textContent  = events.filter(e => e.action === "error" && (!failedResetTs || e.ts > failedResetTs)).length;
       document.getElementById("mTotal").textContent   = events.length;
       document.getElementById("metaLastUpdate").textContent = "Last refresh: " + new Date().toLocaleTimeString("da-DK");
 
