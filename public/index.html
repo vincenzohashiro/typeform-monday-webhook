@@ -269,6 +269,7 @@
 <nav class="tabs">
   <button class="tab-btn active" onclick="switchTab('typeform', this)">Typeform → Monday</button>
   <button class="tab-btn"        onclick="switchTab('calendar', this)">Google Calendar Sync</button>
+  <button class="tab-btn"        onclick="switchTab('meta', this)">Meta Leads</button>
 </nav>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
@@ -401,6 +402,49 @@
         <div class="empty">
           <strong>No sync events yet</strong>
           Set "Event Created" on a Monday item to trigger a sync…
+        </div>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     TAB 3 — Meta Leads
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-meta" class="tab-panel">
+
+  <div class="webhook-bar">
+    <strong>Meta webhook URL:</strong>
+    <span class="webhook-url" id="metaWebhookUrl"></span>
+    <button class="copy-btn" onclick="copyUrl('metaWebhookUrl', this)">Copy</button>
+  </div>
+
+  <main>
+    <div class="stats" style="grid-template-columns: repeat(3, 1fr)">
+      <div class="stat blue">
+        <div class="lbl">Leads created</div>
+        <div class="val" id="mCreated">0</div>
+      </div>
+      <div class="stat err">
+        <div class="lbl">Failed</div>
+        <div class="val" id="mFailed">0</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total</div>
+        <div class="val" id="mTotal">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Lead log</h2>
+        <span class="sub" id="metaLastUpdate">Auto-refreshes every 10 s</span>
+      </div>
+      <div id="metaEventsWrap">
+        <div class="empty">
+          <strong>No leads yet</strong>
+          Waiting for Meta lead form submissions…
         </div>
       </div>
     </div>
@@ -610,12 +654,73 @@
     }
   }
 
+  // ── Meta Leads tab ─────────────────────────────────────────────────────────
+  document.getElementById("metaWebhookUrl").textContent = `${location.origin}/api/meta-webhook`;
+
+  async function loadMetaEvents() {
+    try {
+      const r      = await fetch("/api/meta-events");
+      const events = await r.json();
+
+      document.getElementById("mCreated").textContent = events.filter(e => e.action === "created").length;
+      document.getElementById("mFailed").textContent  = events.filter(e => e.action === "error").length;
+      document.getElementById("mTotal").textContent   = events.length;
+      document.getElementById("metaLastUpdate").textContent = "Last refresh: " + new Date().toLocaleTimeString("da-DK");
+
+      const wrap = document.getElementById("metaEventsWrap");
+      if (!events.length) {
+        wrap.innerHTML = `<div class="empty"><strong>No leads yet</strong>Waiting for Meta lead form submissions…</div>`;
+        return;
+      }
+
+      const rows = events.map(e => {
+        const fields = (e.raw ?? []).reduce((acc, f) => { acc[f.name] = f.value; return acc; }, {});
+        const name   = fields["full_name"] || e.itemName || "—";
+        const email  = fields["email"]    || "—";
+        const phone  = fields["phone_number"] || "—";
+
+        const status = e.action === "created"
+          ? `<span class="badge created">Created</span>`
+          : `<span class="badge err">Error</span>`;
+
+        const detail = e.action === "created"
+          ? `<span class="code">#${e.itemId}</span>`
+          : `<span class="detail" style="color:#de350b">${e.error ?? "—"}</span>
+             ${e.code ? `<span class="code" style="margin-top:3px">${e.code}</span>` : ""}`;
+
+        const rawSection = e.raw?.length
+          ? `<details style="margin-top:4px"><summary style="font-size:11px;color:#5243aa;cursor:pointer">Fields received (${e.raw.length})</summary>
+             <pre style="font-size:10px;background:#f4f5f7;padding:8px;border-radius:4px;margin-top:4px;white-space:pre-wrap">${JSON.stringify(e.raw, null, 2)}</pre></details>`
+          : "";
+
+        return `<tr>
+          <td style="white-space:nowrap;color:#5e6c84">${fmt(e.ts)}</td>
+          <td><strong>${name}</strong><br><span class="muted">${email}</span><br><span class="muted">${phone}</span>${rawSection}</td>
+          <td>${status}</td>
+          <td>${detail}</td>
+        </tr>`;
+      }).join("");
+
+      wrap.innerHTML = `
+        <table>
+          <thead><tr>
+            <th>Time</th><th>Lead</th><th>Status</th><th>Monday item / Error</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    } catch (e) {
+      document.getElementById("metaLastUpdate").textContent = "Refresh failed: " + e.message;
+    }
+  }
+
   // ── Boot ───────────────────────────────────────────────────────────────────
   loadColumns();
   loadEvents();
   loadCalendarEvents();
+  loadMetaEvents();
   setInterval(loadEvents, 10000);
   setInterval(loadCalendarEvents, 10000);
+  setInterval(loadMetaEvents, 10000);
 </script>
 
 </body>
