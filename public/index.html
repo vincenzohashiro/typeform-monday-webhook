@@ -756,7 +756,7 @@
 
   async function loadMetaEvents() {
     try {
-      const r                      = await fetch("/api/meta-events");
+      const r                      = await fetch("/api/lead-events?tab=meta");
       const { events, failedResetTs } = await r.json();
 
       document.getElementById("mCreated").textContent = events.filter(e => e.action === "created").length;
@@ -813,7 +813,7 @@
   // ── WPForms tab ───────────────────────────────────────────────────────────
   async function loadWpformsEvents() {
     try {
-      const r                         = await fetch("/api/wpforms-events");
+      const r                         = await fetch("/api/lead-events?tab=wpforms");
       const { events, failedResetTs } = await r.json();
 
       document.getElementById("wCreated").textContent = events.filter(e => e.action === "created").length;
