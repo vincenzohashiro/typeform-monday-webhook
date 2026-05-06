@@ -298,6 +298,7 @@
   <button class="tab-btn active" onclick="switchTab('typeform', this)">Typeform → Monday</button>
   <button class="tab-btn"        onclick="switchTab('calendar', this)">Google Calendar Sync</button>
   <button class="tab-btn"        onclick="switchTab('meta', this)">Meta Leads</button>
+  <button class="tab-btn"        onclick="switchTab('wpforms', this)">WPForms → Monday</button>
 </nav>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
@@ -483,6 +484,50 @@
 
 </div>
 
+<!-- ══════════════════════════════════════════════════════════════════════════
+     TAB 4 — WPForms → Monday
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-wpforms" class="tab-panel">
+
+  <div class="webhook-bar">
+    <strong>WPForms webhook URL:</strong>
+    <span class="webhook-url" id="wpformsWebhookUrl"></span>
+    <button class="copy-btn" onclick="copyUrl('wpformsWebhookUrl', this)">Copy</button>
+  </div>
+
+  <main>
+    <div class="stats" style="grid-template-columns: repeat(3, 1fr)">
+      <div class="stat blue">
+        <div class="lbl">Items created</div>
+        <div class="val" id="wCreated">0</div>
+      </div>
+      <div class="stat err">
+        <div class="lbl">Failed</div>
+        <div class="val" id="wFailed">0</div>
+        <button class="reset-btn" onclick="resetFailed('wpforms')">Reset counter</button>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total</div>
+        <div class="val" id="wTotal">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Submission log</h2>
+        <span class="sub" id="wpformsLastUpdate">Auto-refreshes every 10 s</span>
+      </div>
+      <div id="wpformsEventsWrap">
+        <div class="empty">
+          <strong>No submissions yet</strong>
+          Waiting for WPForms webhook submissions…
+        </div>
+      </div>
+    </div>
+  </main>
+
+</div>
+
 <script>
   // ── Tab switching ──────────────────────────────────────────────────────────
   let currentTab = "typeform";
@@ -502,6 +547,7 @@
     if      (currentTab === "typeform") Promise.all([loadColumns(), loadEvents()]).finally(done);
     else if (currentTab === "calendar") loadCalendarEvents().finally(done);
     else if (currentTab === "meta")     loadMetaEvents().finally(done);
+    else if (currentTab === "wpforms")  loadWpformsEvents().finally(done);
   }
 
   async function resetFailed(tab) {
@@ -705,7 +751,8 @@
   }
 
   // ── Meta Leads tab ─────────────────────────────────────────────────────────
-  document.getElementById("metaWebhookUrl").textContent = `${location.origin}/api/meta-webhook`;
+  document.getElementById("metaWebhookUrl").textContent    = `${location.origin}/api/meta-webhook`;
+  document.getElementById("wpformsWebhookUrl").textContent = `${location.origin}/api/wpforms-webhook`;
 
   async function loadMetaEvents() {
     try {
@@ -763,14 +810,73 @@
     }
   }
 
+  // ── WPForms tab ───────────────────────────────────────────────────────────
+  async function loadWpformsEvents() {
+    try {
+      const r                         = await fetch("/api/wpforms-events");
+      const { events, failedResetTs } = await r.json();
+
+      document.getElementById("wCreated").textContent = events.filter(e => e.action === "created").length;
+      document.getElementById("wFailed").textContent  = events.filter(e => e.action === "error" && (!failedResetTs || e.ts > failedResetTs)).length;
+      document.getElementById("wTotal").textContent   = events.length;
+      document.getElementById("wpformsLastUpdate").textContent = "Last refresh: " + new Date().toLocaleTimeString("da-DK");
+
+      const wrap = document.getElementById("wpformsEventsWrap");
+      if (!events.length) {
+        wrap.innerHTML = `<div class="empty"><strong>No submissions yet</strong>Waiting for WPForms webhook submissions…</div>`;
+        return;
+      }
+
+      const rows = events.map(e => {
+        const byName = (e.raw ?? []).reduce((acc, f) => { acc[(f.name ?? "").toLowerCase()] = f.value; return acc; }, {});
+        const name   = (e.itemName && !e.itemName.startsWith("Entry #")) ? e.itemName : (Object.values(byName).find(v => v) || "—");
+        const email  = byName["email"] || "—";
+        const phone  = byName["telefon"] || byName["phone"] || "—";
+
+        const status = e.action === "created"
+          ? `<span class="badge created">Created</span>`
+          : `<span class="badge err">Error</span>`;
+
+        const detail = e.action === "created"
+          ? `<span class="code">#${e.itemId}</span>`
+          : `<span class="detail" style="color:#de350b">${e.error ?? "—"}</span>
+             ${e.code ? `<span class="code" style="margin-top:3px">${e.code}</span>` : ""}`;
+
+        const rawSection = e.raw?.length
+          ? `<details style="margin-top:4px"><summary style="font-size:11px;color:#5243aa;cursor:pointer">Fields received (${e.raw.length})</summary>
+             <pre style="font-size:10px;background:#f4f5f7;padding:8px;border-radius:4px;margin-top:4px;white-space:pre-wrap">${JSON.stringify(e.raw, null, 2)}</pre></details>`
+          : "";
+
+        return `<tr>
+          <td style="white-space:nowrap;color:#5e6c84">${fmt(e.ts)}</td>
+          <td><strong>${name}</strong><br><span class="muted">${email}</span><br><span class="muted">${phone}</span>${rawSection}</td>
+          <td>${status}</td>
+          <td>${detail}</td>
+        </tr>`;
+      }).join("");
+
+      wrap.innerHTML = `
+        <table>
+          <thead><tr>
+            <th>Time</th><th>Submission</th><th>Status</th><th>Monday item / Error</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    } catch (e) {
+      document.getElementById("wpformsLastUpdate").textContent = "Refresh failed: " + e.message;
+    }
+  }
+
   // ── Boot ───────────────────────────────────────────────────────────────────
   loadColumns();
   loadEvents();
   loadCalendarEvents();
   loadMetaEvents();
+  loadWpformsEvents();
   setInterval(loadEvents, 10000);
   setInterval(loadCalendarEvents, 10000);
   setInterval(loadMetaEvents, 10000);
+  setInterval(loadWpformsEvents, 10000);
 </script>
 
 </body>
