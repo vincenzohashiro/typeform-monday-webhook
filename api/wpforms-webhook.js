@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     await logEntry({ action: "created", entryId, itemId, itemName, raw });
     res.status(200).json({ ok: true, itemId });
   } catch (err) {
-    await logEntry({ action: "error", entryId, error: err.message, code: err.code ?? "UNKNOWN" });
+    await logEntry({ action: "error", entryId, error: err.message, code: err.code ?? "UNKNOWN", fields: payload.fields ?? [] });
     res.status(200).json({ ok: false, error: err.message });
   }
 }

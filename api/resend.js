@@ -1,11 +1,39 @@
 import { kv } from "@vercel/kv";
 import { findItem, updateItem, postUpdate } from "../lib/monday.js";
 import { buildFromRaw } from "../lib/parser.js";
+import { createMondayItemFromWPForm } from "../lib/wpForms.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
-  const { eventId } = req.body ?? {};
+  const { eventId, source, entryId } = req.body ?? {};
+
+  // ── WPForms resend ──────────────────────────────────────────────────────────
+  if (source === "wpforms") {
+    const all     = await kv.lrange("wpforms_leads", 0, 49);
+    const entries = all.map(e => (typeof e === "string" ? JSON.parse(e) : e));
+    const entry   = entries.find(e => String(e.entryId) === String(entryId));
+
+    if (!entry)              return res.status(404).json({ error: "Entry not found" });
+    if (!entry.fields?.length) return res.status(400).json({ error: "No field data stored for this entry" });
+
+    try {
+      const payload              = { entry_id: entryId, fields: entry.fields };
+      const { itemId, itemName, raw } = await createMondayItemFromWPForm(payload);
+      await kv.set(`wpforms_entry:${entryId}`, { itemId, createdAt: new Date().toISOString() });
+      await kv.lpush("wpforms_leads", JSON.stringify({
+        action: "created", entryId, itemId, itemName, raw, resent: true,
+        ts: new Date().toISOString(),
+      }));
+      await kv.ltrim("wpforms_leads", 0, 199);
+      return res.json({ ok: true, itemId });
+    } catch (err) {
+      return res.status(500).json({ error: err.message, code: err.code });
+    }
+  }
+
+  // ── Typeform resend (existing logic) ───────────────────────────────────────
+  if (!eventId) return res.status(400).json({ error: "eventId required" });
   if (!eventId) return res.status(400).json({ error: "eventId required" });
 
   // Find the stored event

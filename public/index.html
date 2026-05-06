@@ -702,6 +702,27 @@
     }
   }
 
+  async function resendWpForms(entryId) {
+    const btn = document.querySelector(`button[onclick="resendWpForms('${entryId}')"]`);
+    if (btn) { btn.textContent = "Sending…"; btn.disabled = true; }
+    try {
+      const r = await fetch("/api/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "wpforms", entryId }),
+      });
+      const d = await r.json();
+      if (d.ok) {
+        if (btn) { btn.textContent = "✓ Sent"; btn.style.color = "#16a34a"; }
+        setTimeout(loadWpformsEvents, 1000);
+      } else {
+        if (btn) { btn.textContent = `✗ ${d.error}`; btn.style.color = "#dc2626"; btn.disabled = false; }
+      }
+    } catch (e) {
+      if (btn) { btn.textContent = "✗ Network error"; btn.style.color = "#dc2626"; btn.disabled = false; }
+    }
+  }
+
   // ── Calendar tab ───────────────────────────────────────────────────────────
   async function loadCalendarEvents() {
     try {
@@ -837,10 +858,16 @@
           ? `<span class="badge created">Created</span>`
           : `<span class="badge err">Error</span>`;
 
+        const hasFields = (e.fields ?? e.raw ?? []).length > 0;
+        const resendBtn = (e.action === "error" && hasFields)
+          ? `<button onclick="resendWpForms('${e.entryId}')" style="margin-top:6px;font-size:11px;padding:3px 8px;border:1px solid #dfe1e6;border-radius:4px;cursor:pointer;background:#fff">↺ Resend</button>`
+          : "";
+
         const detail = e.action === "created"
           ? `<span class="code">#${e.itemId}</span>`
           : `<span class="detail" style="color:#de350b">${e.error ?? "—"}</span>
-             ${e.code ? `<span class="code" style="margin-top:3px">${e.code}</span>` : ""}`;
+             ${e.code ? `<span class="code" style="margin-top:3px">${e.code}</span>` : ""}
+             ${resendBtn}`;
 
         const rawSection = e.raw?.length
           ? `<details style="margin-top:4px"><summary style="font-size:11px;color:#5243aa;cursor:pointer">Fields received (${e.raw.length})</summary>
