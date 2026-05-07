@@ -859,12 +859,12 @@
           : `<span class="badge err">Error</span>`;
 
         const hasFields = (e.fields ?? e.raw ?? []).length > 0;
-        const resendBtn = (e.action === "error" && hasFields)
+        const resendBtn = hasFields
           ? `<button onclick="resendWpForms('${e.entryId}')" style="margin-top:6px;font-size:11px;padding:3px 8px;border:1px solid #dfe1e6;border-radius:4px;cursor:pointer;background:#fff">↺ Resend</button>`
           : "";
 
         const detail = e.action === "created"
-          ? `<span class="code">#${e.itemId}</span>`
+          ? `<span class="code">#${e.itemId}</span>${resendBtn}`
           : `<span class="detail" style="color:#de350b">${e.error ?? "—"}</span>
              ${e.code ? `<span class="code" style="margin-top:3px">${e.code}</span>` : ""}
              ${resendBtn}`;
