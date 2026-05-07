@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   try {
     const { itemId, itemName, raw } = await createMondayItemFromWPForm(payload);
     await kv.set(`wpforms_entry:${entryId}`, { itemId, createdAt: new Date().toISOString() });
-    await logEntry({ action: "created", entryId, itemId, itemName, raw });
+    await logEntry({ action: "created", entryId, itemId, itemName, raw, fields: payload.fields ?? [] });
     res.status(200).json({ ok: true, itemId });
   } catch (err) {
     await logEntry({ action: "error", entryId, error: err.message, code: err.code ?? "UNKNOWN", fields: payload.fields ?? [] });

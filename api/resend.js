@@ -18,11 +18,13 @@ export default async function handler(req, res) {
     if (!entry.fields?.length) return res.status(400).json({ error: "No field data stored for this entry" });
 
     try {
+      // Remove idempotency key so the resend isn't blocked
+      await kv.del(`wpforms_entry:${entryId}`);
       const payload              = { entry_id: entryId, fields: entry.fields };
       const { itemId, itemName, raw } = await createMondayItemFromWPForm(payload);
       await kv.set(`wpforms_entry:${entryId}`, { itemId, createdAt: new Date().toISOString() });
       await kv.lpush("wpforms_leads", JSON.stringify({
-        action: "created", entryId, itemId, itemName, raw, resent: true,
+        action: "created", entryId, itemId, itemName, raw, fields: entry.fields, resent: true,
         ts: new Date().toISOString(),
       }));
       await kv.ltrim("wpforms_leads", 0, 199);
