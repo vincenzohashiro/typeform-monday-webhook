@@ -1,7 +1,9 @@
 import { kv } from "@vercel/kv";
-import { findItem, updateItem, postUpdate } from "../lib/monday.js";
+import { findItem, updateItem, postUpdate, getItemDetails } from "../lib/monday.js";
 import { buildFromRaw } from "../lib/parser.js";
 import { createMondayItemFromWPForm } from "../lib/wpForms.js";
+import { sendEmail } from "../lib/gmail.js";
+import { BOARD_EMAIL_CONFIG, EMAIL_CONFIG } from "../lib/emailConfig.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
@@ -31,6 +33,47 @@ export default async function handler(req, res) {
       return res.json({ ok: true, itemId });
     } catch (err) {
       return res.status(500).json({ error: err.message, code: err.code });
+    }
+  }
+
+  // ── Email resend ────────────────────────────────────────────────────────────
+  if (source === "email") {
+    const { itemId, emailType, boardId } = req.body ?? {};
+    if (!itemId || !emailType || !boardId) return res.status(400).json({ error: "itemId, emailType, boardId required" });
+
+    const boardCfg = BOARD_EMAIL_CONFIG[String(boardId)];
+    if (!boardCfg) return res.status(400).json({ error: "Unknown board" });
+
+    const emailCfg = EMAIL_CONFIG[emailType];
+    if (!emailCfg?.subject) return res.status(400).json({ error: "Email template not configured" });
+
+    try {
+      const item     = await getItemDetails(String(itemId), [boardCfg.emailColumnId]);
+      const emailCol = item?.column_values?.find(c => c.id === boardCfg.emailColumnId);
+      const to       = emailCol?.text?.trim();
+      if (!to) return res.status(400).json({ error: "No email on Monday item" });
+
+      const itemName = item.name ?? "Kunde";
+
+      // Clear idempotency lock so this resend can proceed
+      await kv.del(`email_sent:${itemId}:${emailType}`);
+
+      await sendEmail({
+        to,
+        subject:        emailCfg.subject,
+        bodyText:       emailCfg.body(itemName),
+        attachmentUrls: emailCfg.attachments,
+      });
+
+      await kv.set(`email_sent:${itemId}:${emailType}`, 1, { ex: 60 * 60 * 24 * 30 });
+      await kv.lpush("email_logs", JSON.stringify({
+        action: "sent", boardId: String(boardId), itemId: String(itemId),
+        itemName, emailType, to, resent: true, ts: new Date().toISOString(),
+      }));
+      await kv.ltrim("email_logs", 0, 199);
+      return res.json({ ok: true });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
   }
 

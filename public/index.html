@@ -959,16 +959,20 @@
           : `<span class="badge err">Error</span>`;
 
         const detail = e.action === "sent"
-          ? `<span class="muted">${e.emailType ?? "—"}</span>`
+          ? `<span class="muted">${e.emailType ?? "—"}${e.resent ? " (resent)" : ""}</span>`
           : e.action === "duplicate"
           ? `<span class="muted">Already sent</span>`
           : `<span class="detail" style="color:#de350b">${e.error ?? "—"}</span>`;
+
+        const resendBtn = e.action === "error" && e.to && e.emailType && e.boardId
+          ? `<button class="resend-btn" onclick="resendEmail('${e.itemId}','${e.emailType}','${e.boardId}',this)">Resend</button>`
+          : "";
 
         return `<tr>
           <td style="white-space:nowrap;color:#5e6c84">${fmt(e.ts)}</td>
           <td><strong>${e.itemName ?? "—"}</strong><br><span class="muted">${e.to ?? "—"}</span><br><span class="muted">${BOARD_NAMES[e.boardId] ?? e.boardId ?? "—"}</span></td>
           <td>${status}</td>
-          <td>${detail}</td>
+          <td>${detail} ${resendBtn}</td>
         </tr>`;
       }).join("");
 
@@ -981,6 +985,26 @@
         </table>`;
     } catch (e) {
       document.getElementById("emailLastUpdate").textContent = "Refresh failed: " + e.message;
+    }
+  }
+
+  async function resendEmail(itemId, emailType, boardId, btn) {
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+    try {
+      const r = await fetch("/api/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "email", itemId, emailType, boardId }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error ?? "Resend failed");
+      btn.textContent = "Sent ✓";
+      setTimeout(loadEmailEvents, 1500);
+    } catch (e) {
+      btn.textContent = "Failed";
+      btn.disabled = false;
+      alert("Resend failed: " + e.message);
     }
   }
 

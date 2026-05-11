@@ -37,7 +37,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const item    = await getItemDetails(itemId, [boardCfg.emailColumnId]);
+    const item     = await getItemDetails(itemId, [boardCfg.emailColumnId]);
     const emailCol = item?.column_values?.find(c => c.id === boardCfg.emailColumnId);
     const to       = emailCol?.text?.trim();
 
@@ -46,24 +46,37 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: false, error: "No email on item" });
     }
 
-    // Idempotency — don't send the same email twice for the same item
+    // Atomic idempotency — SET NX claims the lock before sending
     const idemKey = `email_sent:${itemId}:${emailType}`;
-    const already = await kv.get(idemKey);
-    if (already) {
+    const claimed = await kv.set(idemKey, 1, { ex: 60 * 60 * 24 * 30, nx: true });
+    if (!claimed) {
       await logEntry({ action: "duplicate", boardId, itemId, itemName, emailType, to });
       return res.status(200).json({ ok: true, duplicate: true });
     }
 
-    await sendEmail({
-      to,
-      subject:        emailCfg.subject,
-      bodyText:       emailCfg.body(itemName),
-      attachmentUrls: emailCfg.attachments,
-    });
+    // Retry up to 3 times before giving up
+    let lastErr;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await sendEmail({
+          to,
+          subject:        emailCfg.subject,
+          bodyText:       emailCfg.body(itemName),
+          attachmentUrls: emailCfg.attachments,
+        });
+        await logEntry({ action: "sent", boardId, itemId, itemName, emailType, to });
+        return res.json({ ok: true });
+      } catch (err) {
+        lastErr = err;
+        if (attempt < 3) await new Promise(r => setTimeout(r, attempt * 1500));
+      }
+    }
 
-    await kv.set(idemKey, 1, { ex: 60 * 60 * 24 * 30 });
-    await logEntry({ action: "sent", boardId, itemId, itemName, emailType, to });
-    return res.json({ ok: true });
+    // All 3 attempts failed — release lock so manual resend can retry
+    await kv.del(idemKey);
+    await logEntry({ action: "error", boardId, itemId, itemName, emailType, error: lastErr.message, to });
+    return res.status(500).json({ error: lastErr.message });
+
   } catch (err) {
     await logEntry({ action: "error", boardId, itemId, itemName, emailType, error: err.message });
     return res.status(500).json({ error: err.message });
