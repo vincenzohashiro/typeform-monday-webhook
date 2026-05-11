@@ -299,6 +299,7 @@
   <button class="tab-btn"        onclick="switchTab('calendar', this)">Google Calendar Sync</button>
   <button class="tab-btn"        onclick="switchTab('meta', this)">Meta Leads</button>
   <button class="tab-btn"        onclick="switchTab('wpforms', this)">WPForms → Monday</button>
+  <button class="tab-btn"        onclick="switchTab('email', this)">Email Sent</button>
 </nav>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
@@ -528,6 +529,42 @@
 
 </div>
 
+<!-- ══════════════════════════════════════════════════════════════════════════
+     TAB 5 — Email Sent
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-email" class="tab-panel">
+  <main>
+    <div class="stats" style="grid-template-columns: repeat(3, 1fr)">
+      <div class="stat blue">
+        <div class="lbl">Emails sent</div>
+        <div class="val" id="eSent">0</div>
+      </div>
+      <div class="stat err">
+        <div class="lbl">Failed</div>
+        <div class="val" id="eFailed">0</div>
+        <button class="reset-btn" onclick="resetFailed('email')">Reset counter</button>
+      </div>
+      <div class="stat">
+        <div class="lbl">Total</div>
+        <div class="val" id="eTotal">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Email log</h2>
+        <span class="sub" id="emailLastUpdate">Auto-refreshes every 10 s</span>
+      </div>
+      <div id="emailEventsWrap">
+        <div class="empty">
+          <strong>No emails sent yet</strong>
+          Set a Monday status to "Email X sendt" to trigger an email…
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
 <script>
   // ── Tab switching ──────────────────────────────────────────────────────────
   let currentTab = "typeform";
@@ -548,6 +585,7 @@
     else if (currentTab === "calendar") loadCalendarEvents().finally(done);
     else if (currentTab === "meta")     loadMetaEvents().finally(done);
     else if (currentTab === "wpforms")  loadWpformsEvents().finally(done);
+    else if (currentTab === "email")    loadEmailEvents().finally(done);
   }
 
   async function resetFailed(tab) {
@@ -894,16 +932,70 @@
     }
   }
 
+  // ── Email Sent tab ────────────────────────────────────────────────────────
+  async function loadEmailEvents() {
+    try {
+      const r                         = await fetch("/api/lead-events?tab=email");
+      const { events, failedResetTs } = await r.json();
+
+      document.getElementById("eSent").textContent   = events.filter(e => e.action === "sent").length;
+      document.getElementById("eFailed").textContent = events.filter(e => e.action === "error" && (!failedResetTs || e.ts > failedResetTs)).length;
+      document.getElementById("eTotal").textContent  = events.length;
+      document.getElementById("emailLastUpdate").textContent = "Last refresh: " + new Date().toLocaleTimeString("da-DK");
+
+      const wrap = document.getElementById("emailEventsWrap");
+      if (!events.length) {
+        wrap.innerHTML = `<div class="empty"><strong>No emails sent yet</strong>Set a Monday status to "Email X sendt" to trigger an email…</div>`;
+        return;
+      }
+
+      const BOARD_NAMES = { "5052697723": "Board 1", "5089650058": "Board 2", "5052958230": "Board 3" };
+
+      const rows = events.map(e => {
+        const status = e.action === "sent"
+          ? `<span class="badge created">Sent</span>`
+          : e.action === "duplicate"
+          ? `<span class="badge updated">Duplicate</span>`
+          : `<span class="badge err">Error</span>`;
+
+        const detail = e.action === "sent"
+          ? `<span class="muted">${e.emailType ?? "—"}</span>`
+          : e.action === "duplicate"
+          ? `<span class="muted">Already sent</span>`
+          : `<span class="detail" style="color:#de350b">${e.error ?? "—"}</span>`;
+
+        return `<tr>
+          <td style="white-space:nowrap;color:#5e6c84">${fmt(e.ts)}</td>
+          <td><strong>${e.itemName ?? "—"}</strong><br><span class="muted">${e.to ?? "—"}</span><br><span class="muted">${BOARD_NAMES[e.boardId] ?? e.boardId ?? "—"}</span></td>
+          <td>${status}</td>
+          <td>${detail}</td>
+        </tr>`;
+      }).join("");
+
+      wrap.innerHTML = `
+        <table>
+          <thead><tr>
+            <th>Time</th><th>Recipient</th><th>Status</th><th>Email type</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    } catch (e) {
+      document.getElementById("emailLastUpdate").textContent = "Refresh failed: " + e.message;
+    }
+  }
+
   // ── Boot ───────────────────────────────────────────────────────────────────
   loadColumns();
   loadEvents();
   loadCalendarEvents();
   loadMetaEvents();
   loadWpformsEvents();
+  loadEmailEvents();
   setInterval(loadEvents, 10000);
   setInterval(loadCalendarEvents, 10000);
   setInterval(loadMetaEvents, 10000);
   setInterval(loadWpformsEvents, 10000);
+  setInterval(loadEmailEvents, 10000);
 </script>
 
 </body>

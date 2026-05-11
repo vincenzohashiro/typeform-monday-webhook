@@ -2,8 +2,8 @@ import { kv } from "@vercel/kv";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
-  const tab     = req.query.tab === "wpforms" ? "wpforms" : "meta";
-  const listKey = tab === "wpforms" ? "wpforms_leads" : "meta_leads";
+  const tab     = req.query.tab === "wpforms" ? "wpforms" : req.query.tab === "email" ? "email" : "meta";
+  const listKey = tab === "wpforms" ? "wpforms_leads" : tab === "email" ? "email_logs" : "meta_leads";
   const [entries, failedResetTs] = await Promise.all([
     kv.lrange(listKey, 0, 49),
     kv.get(`failed_reset_ts:${tab}`),
