@@ -1,5 +1,5 @@
 import { kv } from "@vercel/kv";
-import { findItem, updateItem, postUpdate, getItemDetails } from "../lib/monday.js";
+import { findItem, updateItem, postUpdate, getItemDetails, getBoardItems } from "../lib/monday.js";
 import { buildFromRaw } from "../lib/parser.js";
 import { createMondayItemFromWPForm } from "../lib/wpForms.js";
 import { sendEmail } from "../lib/gmail.js";
@@ -66,6 +66,9 @@ export default async function handler(req, res) {
       });
 
       await kv.set(`email_sent:${itemId}:${emailType}`, 1, { ex: 60 * 60 * 24 * 30 });
+      const emailLabel = emailType.replace("email", "Email ");
+      const sentAt     = new Date().toLocaleString("da-DK", { dateStyle: "short", timeStyle: "short" });
+      postUpdate(String(itemId), `✉️ ${emailLabel} sendt (gensendt)\nSendt: ${sentAt}\nStatus: Sendt ✓`).catch(() => {});
       await kv.lpush("email_logs", JSON.stringify({
         action: "sent", boardId: String(boardId), itemId: String(itemId),
         itemName, emailType, to, resent: true, ts: new Date().toISOString(),

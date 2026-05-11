@@ -1,5 +1,5 @@
 import { kv } from "@vercel/kv";
-import { getItemDetails } from "../lib/monday.js";
+import { getItemDetails, postUpdate } from "../lib/monday.js";
 import { sendEmail } from "../lib/gmail.js";
 import { BOARD_EMAIL_CONFIG, EMAIL_CONFIG } from "../lib/emailConfig.js";
 
@@ -64,6 +64,9 @@ export default async function handler(req, res) {
           bodyText:       emailCfg.body(itemName),
           attachmentUrls: emailCfg.attachments,
         });
+        const emailLabel = emailType.replace("email", "Email ");
+        const sentAt     = new Date().toLocaleString("da-DK", { dateStyle: "short", timeStyle: "short" });
+        postUpdate(itemId, `✉️ ${emailLabel} sendt\nSendt: ${sentAt}\nStatus: Sendt ✓`).catch(() => {});
         await logEntry({ action: "sent", boardId, itemId, itemName, emailType, to });
         return res.json({ ok: true });
       } catch (err) {
