@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Håreksperten — Monday Integrations Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.65;
+    color: #172b4d;
+    background: #fff;
+  }
+
+  /* ── Cover page ── */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 80px 80px;
+    background: #0052cc;
+    color: #fff;
+    page-break-after: always;
+  }
+  .cover .logo { font-size: 48px; margin-bottom: 24px; }
+  .cover h1 { font-size: 38px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .cover .sub { font-size: 18px; opacity: .8; margin-bottom: 40px; }
+  .cover .meta { font-size: 13px; opacity: .65; border-top: 1px solid rgba(255,255,255,.3); padding-top: 20px; margin-top: auto; width: 100%; }
+  .cover .meta span { display: block; margin-bottom: 4px; }
+
+  /* ── TOC ── */
+  .toc-page {
+    padding: 60px 80px;
+    page-break-after: always;
+  }
+  .toc-page h2 { font-size: 22px; font-weight: 700; margin-bottom: 24px; color: #0052cc; border-bottom: 2px solid #0052cc; padding-bottom: 8px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin-bottom: 8px; font-size: 13px; color: #172b4d; }
+  .toc li a { color: #0052cc; text-decoration: none; }
+  .toc li a:hover { text-decoration: underline; }
+  .toc .sub-items { margin-top: 4px; margin-bottom: 4px; padding-left: 18px; }
+  .toc .sub-items li { margin-bottom: 3px; font-size: 12px; color: #5e6c84; }
+
+  /* ── Content ── */
+  .content { padding: 48px 80px; max-width: 960px; margin: 0 auto; }
+
+  h1.section-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0052cc;
+    border-bottom: 2px solid #0052cc;
+    padding-bottom: 10px;
+    margin-bottom: 24px;
+    margin-top: 48px;
+  }
+  h1.section-title:first-child { margin-top: 0; }
+
+  h2.sub-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #172b4d;
+    margin-top: 32px;
+    margin-bottom: 12px;
+    padding-left: 12px;
+    border-left: 4px solid #0052cc;
+  }
+
+  h3.sub-sub {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0052cc;
+    margin-top: 20px;
+    margin-bottom: 8px;
+  }
+
+  p { margin-bottom: 12px; color: #344563; }
+
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 5px; color: #344563; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
+  thead th {
+    background: #0052cc;
+    color: #fff;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    font-weight: 600;
+  }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid #dfe1e6; vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: #f8f9fa; }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .badge-green  { background: #e3fcef; color: #006644; }
+  .badge-blue   { background: #deebff; color: #0052cc; }
+  .badge-orange { background: #fff0db; color: #973800; }
+  .badge-red    { background: #ffebe6; color: #bf2600; }
+  .badge-grey   { background: #f4f5f7; color: #5e6c84; }
+
+  /* ── Code ── */
+  code {
+    font-family: "Fira Mono", "Consolas", monospace;
+    font-size: 11px;
+    background: #f4f5f7;
+    color: #5243aa;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .url {
+    font-family: "Fira Mono", "Consolas", monospace;
+    font-size: 11px;
+    background: #e8f0fe;
+    color: #1a56db;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* ── Info boxes ── */
+  .box {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .box-blue   { background: #deebff; border-left: 4px solid #0052cc; color: #0052cc; }
+  .box-green  { background: #e3fcef; border-left: 4px solid #36b37e; color: #006644; }
+  .box-orange { background: #fff0db; border-left: 4px solid #ff8b00; color: #973800; }
+  .box-red    { background: #ffebe6; border-left: 4px solid #de350b; color: #bf2600; }
+  .box strong { display: block; margin-bottom: 4px; font-size: 13px; }
+
+  /* ── Page breaks ── */
+  .page-break { page-break-before: always; }
+  .section    { page-break-inside: avoid; }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid #dfe1e6; margin: 28px 0; }
+
+  /* ── Print ── */
+  @media print {
+    body { font-size: 12px; }
+    .cover { min-height: 0; height: 100vh; }
+    .no-print { display: none; }
+    a { color: inherit; text-decoration: none; }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; }
+  }
+
+  /* ── Print button (screen only) ── */
+  .print-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0052cc;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,82,204,.35);
+    z-index: 999;
+  }
+  .print-btn:hover { background: #0043a8; }
+
+  .step {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+  }
+  .step-num {
+    min-width: 24px;
+    height: 24px;
+    background: #0052cc;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card-box {
+    border: 1px solid #dfe1e6;
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .card-box h4 { font-size: 13px; font-weight: 700; margin-bottom: 8px; color: #0052cc; }
+  .card-box p, .card-box li { font-size: 12px; }
+
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+    font-size: 12px;
+  }
+  .flow-step {
+    background: #deebff;
+    color: #0052cc;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-weight: 600;
+    font-size: 11px;
+  }
+  .flow-arrow { color: #97a0af; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- ══ COVER ══════════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="logo">⚡</div>
+  <h1>Monday Integrations</h1>
+  <div class="sub">Complete System Report — Håreksperten</div>
+  <p style="opacity:.75; font-size:14px; margin-bottom:0;">
+    A full description of every integration, automation, email, webhook, and tool
+    connected to Monday.com — written so anyone can understand it.
+  </p>
+  <div class="meta">
+    <span><strong>Live dashboard:</strong> https://typeform-monday-webhook.vercel.app</span>
+    <span><strong>GitHub:</strong> https://github.com/vincenzohashiro/typeform-monday-webhook</span>
+    <span><strong>Vercel project:</strong> typeform-monday-webhook</span>
+    <span><strong>Report generated:</strong> May 2026</span>
+  </div>
+</div>
+
+<!-- ══ TABLE OF CONTENTS ═══════════════════════════════════════════════════════ -->
+<div class="toc-page">
+  <h2>Table of Contents</h2>
+  <div class="toc">
+    <ol>
+      <li><a href="#overview">Project Overview</a></li>
+      <li><a href="#dashboard">The Dashboard</a>
+        <ul class="sub-items">
+          <li>Header &amp; navigation</li>
+          <li>Tab 1 — Typeform → Monday</li>
+          <li>Tab 2 — Google Calendar Sync</li>
+          <li>Tab 3 — Meta Leads</li>
+          <li>Tab 4 — WPForms → Monday</li>
+          <li>Tab 5 — Email Sent</li>
+          <li>Resend buttons &amp; Reset counter</li>
+        </ul>
+      </li>
+      <li><a href="#integration-typeform">Integration 1: Typeform → Monday</a></li>
+      <li><a href="#integration-calendar">Integration 2: Google Calendar Sync</a></li>
+      <li><a href="#integration-meta">Integration 3: Meta Leads → Monday</a></li>
+      <li><a href="#integration-wpforms">Integration 4: WPForms → Monday</a></li>
+      <li><a href="#integration-email">Integration 5: Email Automation</a>
+        <ul class="sub-items">
+          <li>Email 1 — Information om dit forløb</li>
+          <li>Email 2 — Vigtige oplysninger</li>
+          <li>Email 3 — Booking bekræftet</li>
+          <li>Email 4 — Plan og program (+ 14-day auto-timer)</li>
+          <li>Duplicate prevention &amp; failsafe</li>
+        </ul>
+      </li>
+      <li><a href="#webhooks">Monday Webhooks — Complete Reference</a></li>
+      <li><a href="#boards">Board Overview</a></li>
+      <li><a href="#infrastructure">Technical Infrastructure</a></li>
+      <li><a href="#access">How to Control, Edit &amp; Access</a>
+        <ul class="sub-items">
+          <li>GitHub</li>
+          <li>Vercel — Deployments, Env Vars, Logs, Cron</li>
+          <li>Vercel Blob (PDF storage)</li>
+          <li>Vercel KV (database)</li>
+          <li>Monday webhook setup</li>
+        </ul>
+      </li>
+      <li><a href="#quickref">Quick Reference</a></li>
+    </ol>
+  </div>
+</div>
+
+<!-- ══ SECTION 1 — OVERVIEW ════════════════════════════════════════════════════ -->
+<div class="content">
+<h1 class="section-title" id="overview">1. Project Overview</h1>
+
+<p>This is a custom-built automation system for <strong>Håreksperten</strong>, a Danish hair transplant company. It acts as a central hub that connects the company's various lead sources and tools to their project management software, <strong>Monday.com</strong>.</p>
+
+<p>Think of it as a switchboard: whenever a potential client fills out a form, triggers an action in Monday, or gets close to their operation date, this system automatically handles the follow-up — creating records, sending emails, booking calendar events — without anyone needing to do it manually.</p>
+
+<p>It runs 24/7 on <strong>Vercel</strong> (a cloud hosting platform) and is accessible at:</p>
+
+<div class="box box-blue"><strong>Live dashboard URL</strong> https://typeform-monday-webhook.vercel.app</div>
+
+<h2 class="sub-title">What problems does it solve?</h2>
+<ul>
+  <li>Leads from Facebook/Instagram ads are automatically added to Monday — no manual copy-pasting</li>
+  <li>Website contact form submissions go directly to Monday — no manual entry</li>
+  <li>When a client submits their flight details via Typeform, their Monday record is updated instantly</li>
+  <li>Calendar events for client appointments are created, updated, and deleted automatically</li>
+  <li>Emails with PDF attachments are sent automatically when team members change a status in Monday</li>
+  <li>Email 4 for Board 3 is sent automatically 14 days before each client's operation date — no one needs to remember</li>
+</ul>
+
+<h2 class="sub-title">The five integrations at a glance</h2>
+<table>
+  <thead>
+    <tr><th>Integration</th><th>Source</th><th>Destination</th><th>Boards</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Typeform → Monday</td><td>Typeform flight form</td><td>Board 2 (update existing item)</td><td>Board 2</td></tr>
+    <tr><td>Google Calendar Sync</td><td>Monday status/date change</td><td>Google Calendar (3 accounts)</td><td>1, 2, 3</td></tr>
+    <tr><td>Meta Leads</td><td>Facebook / Instagram lead ads</td><td>Board 1 (new item)</td><td>Board 1</td></tr>
+    <tr><td>WPForms → Monday</td><td>WordPress website contact form</td><td>Board 1 (new item)</td><td>Board 1</td></tr>
+    <tr><td>Email Automation</td><td>Monday status change / daily timer</td><td>Client email inbox (via Gmail)</td><td>1, 2, 3</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+<!-- ══ SECTION 2 — DASHBOARD ═══════════════════════════════════════════════════ -->
+<div class="content page-break">
+<h1 class="section-title" id="dashboard">2. The Dashboard</h1>
+
+<p>The dashboard at <span class="url">https://typeform-monday-webhook.vercel.app</span> is a live monitoring panel that shows everything happening across all five integrations. It refreshes automatically every 10 seconds.</p>
+
+<h2 class="sub-title">Header</h2>
+<ul>
+  <li><strong>⚡ Monday Integrations</strong> — the title</li>
+  <li><strong>↺ Refresh button</strong> — manually reloads data on the current tab</li>
+  <li><strong>Green blinking dot</strong> — confirms the page loaded correctly. It is always on when the page is open — it does not mean something is actively running</li>
+</ul>
+
+<h2 class="sub-title">Tab 1 — Typeform → Monday</h2>
+<p><strong>Blue URL bar:</strong> Shows the Typeform webhook URL. This is pasted into Typeform's webhook settings so submissions reach the system. Has a Copy button.</p>
+<p><strong>Stats:</strong> Total processed · Successful (green) · Failed (red) with Reset counter button.</p>
+<p><strong>Board columns card:</strong> Displays all Monday Board 2 column IDs — a developer reference tool.</p>
+<p><strong>Event log:</strong> Every Typeform submission with time, email, status badge (Success/Failed), Monday item ID, and a collapsible raw data view. Failed rows have a <strong>Resend button</strong>.</p>
+
+<h2 class="sub-title">Tab 2 — Google Calendar Sync</h2>
+<p><strong>Blue URL bar:</strong> The Monday webhook URL for calendar sync.</p>
+<p><strong>Stats (4 cards):</strong> Events created · Events updated · Events deleted · Failed.</p>
+<p><strong>Board configuration card:</strong> Shows the column IDs, calendar accounts, and trigger labels for all 3 boards — a quick reference without opening Monday.</p>
+<p><strong>Calendar sync log:</strong> Every action (created / updated / deleted / deduplicated / error) with the client name, board, and Google Calendar event ID.</p>
+
+<h2 class="sub-title">Tab 3 — Meta Leads</h2>
+<p><strong>Blue URL bar:</strong> The Meta webhook URL (pasted into Facebook Developer portal).</p>
+<p><strong>Stats:</strong> Leads created · Failed · Total.</p>
+<p><strong>Lead log:</strong> Every Facebook/Instagram lead with name, email, phone, status, and a collapsible "Fields received" section showing exactly what Meta sent.</p>
+
+<h2 class="sub-title">Tab 4 — WPForms → Monday</h2>
+<p><strong>Blue URL bar:</strong> The WPForms webhook URL (pasted into WPForms settings in WordPress).</p>
+<p><strong>Stats:</strong> Items created · Failed · Total.</p>
+<p><strong>Submission log:</strong> Every website form submission with client details, entry ID, status, and a "Fields received" section. <strong>Every row</strong> has a Resend button — useful if a Monday item was accidentally deleted.</p>
+
+<h2 class="sub-title">Tab 5 — Email Sent</h2>
+<p><strong>No URL bar</strong> — this tab sends data outward (emails), not receives it.</p>
+<p><strong>Stats:</strong> Emails sent · Failed · Total (includes duplicates).</p>
+<p><strong>Email log:</strong> Every email attempt with recipient, board, and one of four status badges:</p>
+<table>
+  <thead><tr><th>Badge</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge badge-green">Sent</span></td><td>Email was delivered successfully</td></tr>
+    <tr><td><span class="badge badge-blue">Duplicate</span></td><td>Monday fired the webhook twice — second attempt was blocked. Only one email was sent</td></tr>
+    <tr><td><span class="badge badge-red">Error</span></td><td>Something went wrong. Error message is shown. A Resend button appears</td></tr>
+    <tr><td><span class="badge badge-green">Sent</span> (resent)</td><td>Was manually resent using the Resend button after a previous failure</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub-title">Reset counter — what it does and does not do</h2>
+<div class="box box-orange">
+  <strong>Important to understand</strong>
+  Clicking "Reset counter" does NOT delete logs or undo anything. It only stamps a timestamp so the Failed number only counts errors after that moment. Old errors remain visible in the log below — they just stop counting toward the red number. Use it to clear old known errors so you can monitor for new ones.
+</div>
+
+<h2 class="sub-title">Resend buttons — when to use them</h2>
+<table>
+  <thead><tr><th>Tab</th><th>Where it appears</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td>Typeform</td><td>Failed rows only</td><td>Re-runs the Typeform submission against Monday</td></tr>
+    <tr><td>WPForms</td><td>All rows</td><td>Re-creates the Monday item from stored form data</td></tr>
+    <tr><td>Email Sent</td><td>Error rows only</td><td>Re-fetches client email from Monday and resends the email</td></tr>
+  </tbody>
+</table>
+<p>All resend operations are safe to click multiple times — duplicate protection is built in.</p>
+
+</div>
+
+<!-- ══ SECTION 3 — TYPEFORM ════════════════════════════════════════════════════ -->
+<div class="content page-break">
+<h1 class="section-title" id="integration-typeform">3. Integration 1: Typeform → Monday</h1>
+
+<p>When a client fills out the Typeform flight information form, their details are automatically matched to their existing record in <strong>Board 2</strong> in Monday and all relevant columns are updated.</p>
+
+<h2 class="sub-title">Step-by-step flow</h2>
+<div class="flow">
+  <div class="flow-step">Client submits Typeform</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Typeform POSTs to /api/webhook</div><div class="flow-arrow">→</div>
+  <div class="flow-step">System finds client in Board 2 by email</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Updates all Monday columns</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Sets status to "Email 3 sendt"</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Posts comment on Monday item</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Logs to dashboard</div>
+</div>
+
+<h2 class="sub-title">Fields mapped to Monday</h2>
+<p>The system reads answers from the Typeform response and maps them to the corresponding Monday columns on Board 2.</p>
+
+<h2 class="sub-title">Duplicate prevention</h2>
+<p>Typeform assigns a unique token to every submission. The system saves this token after processing. If Typeform retries the same submission (which it does automatically on network errors), the system recognises the token and ignores the duplicate.</p>
+
+<h2 class="sub-title">What triggers an error</h2>
+<ul>
+  <li>No email address in the Typeform response → cannot search Monday</li>
+  <li>Email not found in Monday Board 2 → person may not have been created yet</li>
+  <li>Monday API temporarily unavailable → system returns 500 so Typeform retries</li>
+</ul>
+
+<div class="box box-blue"><strong>Webhook endpoint</strong> POST https://typeform-monday-webhook.vercel.app/api/webhook</div>
+
+</div>
+
+<!-- ══ SECTION 4 — CALENDAR ════════════════════════════════════════════════════ -->
+<div class="content page-break">
+<h1 class="section-title" id="integration-calendar">4. Integration 2: Google Calendar Sync</h1>
+
+<p>Keeps Google Calendar automatically in sync with Monday. When a team member sets an appointment date and changes a status in Monday, a calendar event is created. Date changes update the event. Setting the status to "Event Delete" removes it.</p>
+
+<h2 class="sub-title">Three boards, three calendars</h2>
+<table>
+  <thead><tr><th>Board</th><th>Board ID</th><th>Calendar account</th></tr></thead>
+  <tbody>
+    <tr><td>Board 1</td><td><code>5052697723</code></td><td>sally@haareksperten.com</td></tr>
+    <tr><td>Board 2</td><td><code>5089650058</code></td><td>zari@haareksperten.com</td></tr>
+    <tr><td>Board 3</td><td><code>5052958230</code></td><td>info@haareksperten.com</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub-title">Trigger labels</h2>
+<table>
+  <thead><tr><th>Status set in Monday</th><th>What happens</th></tr></thead>
+  <tbody>
+    <tr><td>Event Created</td><td>Calendar event is created using the date column and client details</td></tr>
+    <tr><td>Event Delete</td><td>The calendar event is deleted</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub-title">Date changes</h2>
+<p>If someone changes the date column on a Monday item that already has a calendar event, the calendar event is automatically updated to match the new date — no need to delete and recreate it.</p>
+
+<h2 class="sub-title">Smart edge case handling</h2>
+<ul>
+  <li><strong>Monday fires twice:</strong> The system recognises the duplicate and ignores it (logged as "Deduplicated")</li>
+  <li><strong>Calendar event manually deleted:</strong> If someone deletes the event from Google Calendar directly and then triggers it again from Monday, the system detects it's gone and creates a fresh one</li>
+  <li><strong>Date set before status:</strong> If the status is set to "Event Created" but there's no date yet, the system logs "no date set on item" and does nothing</li>
+</ul>
+
+<div class="box box-blue"><strong>Webhook endpoint</strong> POST https://typeform-monday-webhook.vercel.app/api/calendar-webhook</div>
+
+</div>
+
+<!-- ══ SECTION 5 — META ════════════════════════════════════════════════════════ -->
+<div class="content page-break">
+<h1 class="section-title" id="integration-meta">5. Integration 3: Meta Leads → Monday</h1>
+
+<p>When someone submits a lead form on a <strong>Facebook or Instagram ad</strong>, their details are automatically created as a new item in <strong>Board 1</strong> (in the "Ny Kontakt" group).</p>
+
+<h2 class="sub-title">Step-by-step flow</h2>
+<div class="flow">
+  <div class="flow-step">Person clicks ad, submits form</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Meta POSTs to /api/meta-webhook</div><div class="flow-arrow">→</div>
+  <div class="flow-step">System fetches full lead from Meta API</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Creates item in Board 1</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Logs to dashboard</div>
+</div>
+
+<h2 class="sub-title">Fields mapped to Monday Board 1</h2>
+<table>
+  <thead><tr><th>Meta field</th><th>Monday column</th><th>Column ID</th></tr></thead>
+  <tbody>
+    <tr><td>full_name</td><td>Item name</td><td>(item title)</td></tr>
+    <tr><td>email</td><td>Email</td><td><code>email_mkwx219b</code></td></tr>
+    <tr><td>phone_number</td><td>Telefon</td><td><code>phone_mkwx7cez</code></td></tr>
+    <tr><td>hvor_gammel_er_du</td><td>Alder</td><td><code>text_mm30m1dw</code></td></tr>
+    <tr><td>hvornår_er_du_bedst_at_træffe</td><td>Bedste tid</td><td><code>long_text_mkykhe2h</code></td></tr>
+    <tr><td>(automatic)</td><td>Lead source</td><td><code>color_mkwx19y8</code> → "Meta"</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub-title">About the occasional "META_API_ERROR"</h2>
+<p>Sometimes the dashboard shows an error with "Object does not exist." This is not a bug — it happens when Meta sends a test or phantom webhook (e.g. when verifying the webhook connection). There is no real lead behind it. It can be safely ignored, and the Reset counter button clears the error count.</p>
+
+<div class="box box-blue"><strong>Webhook endpoint</strong> POST https://typeform-monday-webhook.vercel.app/api/meta-webhook</div>
+
+</div>
+
+<!-- ══ SECTION 6 — WPFORMS ════════════════════════════════════════════════════ -->
+<div class="content page-break">
+<h1 class="section-title" id="integration-wpforms">6. Integration 4: WPForms → Monday</h1>
+
+<p>When someone fills out the contact form on the <strong>Håreksperten WordPress website</strong>, their details are automatically sent to <strong>Board 1</strong> in Monday as a new lead.</p>
+
+<h2 class="sub-title">Step-by-step flow</h2>
+<div class="flow">
+  <div class="flow-step">Client submits website form</div><div class="flow-arrow">→</div>
+  <div class="flow-step">WordPress POSTs to /api/wpforms-webhook</div><div class="flow-arrow">→</div>
+  <div class="flow-step">System maps fields to Monday columns</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Creates item in Board 1</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Logs to dashboard</div>
+</div>
+
+<h2 class="sub-title">Fields mapped to Monday Board 1</h2>
+<table>
+  <thead><tr><th>Form field (slug)</th><th>Monday column</th><th>Column ID</th></tr></thead>
+  <tbody>
+    <tr><td>navn / name / fulde-navn</td><td>Item name</td><td>(item title)</td></tr>
+    <tr><td>email</td><td>Email</td><td><code>email_mkwx219b</code></td></tr>
+    <tr><td>telefon / phone / phone-number / telefonnummer</td><td>Telefon</td><td><code>phone_mkwx7cez</code></td></tr>
+    <tr><td>hvor-gammel-er-du / alder</td><td>Alder</td><td><code>text_mm30m1dw</code></td></tr>
+    <tr><td>hvornar-er-du-bedst-at-traffe / hvornar-ma-vi-ringe-dig-op</td><td>Bedste tid</td><td><code>long_text_mkykhe2h</code></td></tr>
+    <tr><td>kilde</td><td>Lead source</td><td><code>color_mkwx19y8</code></td></tr>
+    <tr><td>(automatic if no kilde)</td><td>Lead source</td><td><code>color_mkwx19y8</code> → "Website"</td></tr>
+  </tbody>
+</table>
+
+<p>The system handles multiple spellings of Danish field names (e.g. "træffe" / "traeffe" / "traffe") automatically, so form label changes don't break the mapping.</p>
+
+<div class="box box-blue"><strong>Webhook endpoint</strong> POST https://typeform-monday-webhook.vercel.app/api/wpforms-webhook</div>
+
+</div>
+
+<!-- ══ SECTION 7 — EMAIL ═══════════════════════════════════════════════════════ -->
+<div class="content page-break">
+<h1 class="section-title" id="integration-email">7. Integration 5: Email Automation</h1>
+
+<p>Automatically sends personalised Danish emails with PDF attachments to clients when a team member changes a status column in Monday to "Email X sendt". All emails are sent from <strong>info@haareksperten.com</strong> via the Gmail API.</p>
+
+<p>After every successful send, the system posts a comment directly on the Monday item confirming the send:</p>
+<div class="box box-green">✉️ Email 1 sendt<br>Sendt: 13/05/2026 kl. 18:15<br>Status: Sendt ✓</div>
+
+<hr>
+
+<h2 class="sub-title">Email 1 — Information om dit forløb hos Håreksperten</h2>
+<table>
+  <thead><tr><th>Property</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Trigger</td><td>Status set to "Email 1 sendt"</td></tr>
+    <tr><td>Applies to</td><td>Board 1 and Board 2</td></tr>
+    <tr><td>Subject</td><td>Information om dit forløb hos Håreksperten</td></tr>
+    <tr><td>Attachments</td><td>1. Pakkeindhold og dit forløb.pdf<br>2. Før og efter operationen.pdf<br>3. Flyinformationer og oplysninger.pdf</td></tr>
+    <tr><td>Content</td><td>Welcome information, YouTube links, clinic videos, hotel details, aftercare contact</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub-title">Email 2 — Vigtige oplysninger – næste skridt</h2>
+<table>
+  <thead><tr><th>Property</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Trigger</td><td>Status set to "Email 2 sendt"</td></tr>
+    <tr><td>Applies to</td><td>Board 1 and Board 2</td></tr>
+    <tr><td>Subject</td><td>Vigtige oplysninger – næste skridt</td></tr>
+    <tr><td>Attachments</td><td>6. Klinikkens kontrakt.pdf</td></tr>
+    <tr><td>Content</td><td>Asks client to fill in flight details via Typeform link, summarises flight rules (airports, baggage, timing), explains clinic contract</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub-title">Email 3 — Booking bekræftet – næste skridt</h2>
+<table>
+  <thead><tr><th>Property</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Trigger</td><td>Status set to "Email 3 sendt"</td></tr>
+    <tr><td>Applies to</td><td>Board 2 only</td></tr>
+    <tr><td>Subject</td><td>Booking bekræftet – næste skridt</td></tr>
+    <tr><td>Attachments</td><td>None</td></tr>
+    <tr><td>Content</td><td>Confirms booking, says full stay programme arrives 14 days before departure</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub-title">Email 4 — Plan og program for dit ophold &amp; Hårplan</h2>
+<table>
+  <thead><tr><th>Property</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Trigger</td><td>Status set to "Email 4 sendt" OR automatic 14-day timer</td></tr>
+    <tr><td>Applies to</td><td>Board 3 only</td></tr>
+    <tr><td>Subject</td><td>Plan og program for dit ophold &amp; Hårplan</td></tr>
+    <tr><td>Attachments</td><td>4. Alt du skal vide efter din hårtransplantation.pdf<br>5. Plan og program.pdf</td></tr>
+    <tr><td>Content</td><td>Full stay programme for Istanbul, post-operation hair care guide, hotel and clinic presentation links</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub-title">The 14-day automatic timer (Email 4 only)</h2>
+<p>A <strong>daily cron job</strong> runs every morning at 07:00 UTC. It checks every item on Board 3 and looks at the "Operationsdato" column (operation date).</p>
+<ul>
+  <li>If the operation date is <strong>14 days or fewer away</strong> and Email 4 has not been sent yet → it sends Email 4 automatically</li>
+  <li>If Email 4 was already sent (manually or by the timer) → it is skipped</li>
+  <li>If the email fails today → the lock is released, and tomorrow's run tries again</li>
+  <li>This continues every day until the email succeeds or the operation date passes</li>
+</ul>
+
+<div class="box box-green"><strong>Result:</strong> Every Board 3 client will receive Email 4 within the 14-day window before their operation, regardless of whether anyone in the team remembers to send it manually.</div>
+
+<h2 class="sub-title">Duplicate prevention (all emails)</h2>
+<p>Monday often fires webhooks 2–3 times per status change. To prevent the same email being sent twice:</p>
+<ul>
+  <li>The moment the system decides to send, it claims an <strong>atomic lock</strong> in the database</li>
+  <li>Any second webhook that arrives — even milliseconds later — sees the lock is taken and stops immediately (logged as "Duplicate")</li>
+  <li>If the send fails, the lock is released so the next attempt can go through</li>
+  <li>The lock expires after 30 days automatically</li>
+</ul>
+
+<div class="box box-blue"><strong>Webhook endpoint</strong> POST https://typeform-monday-webhook.vercel.app/api/monday-email<br><strong>Cron endpoint</strong> GET https://typeform-monday-webhook.vercel.app/api/email-cron (runs daily at 07:00 UTC)</div>
+
+</div>
+
+<!-- ══ SECTION 8 — WEBHOOKS ════════════════════════════════════════════════════ -->
+<div class="content page-break">
+<h1 class="section-title" id="webhooks">8. Monday Webhooks — Complete Reference</h1>
+
+<p>A webhook is a notification that Monday sends to this system whenever something changes. Every time a relevant status or date column is changed in Monday, Monday instantly sends the details to the corresponding endpoint URL. Without these webhooks registered in Monday, none of the automations fire.</p>
+
+<div class="box box-orange"><strong>How to register a webhook in Monday</strong><br>
+Open the board → click Integrate (top right) → search "Webhooks" → choose trigger "When a column changes" → select the column → paste the URL → save.
+</div>
+
+<hr>
+
+<h2 class="sub-title">Calendar Webhooks</h2>
+<p>Endpoint: <span class="url">https://typeform-monday-webhook.vercel.app/api/calendar-webhook</span></p>
+<p>Must be registered <strong>twice per board</strong> — once for the status column and once for the date column.</p>
+
+<table>
+  <thead>
+    <tr><th>Board</th><th>Board ID</th><th>Column type</th><th>Column ID</th><th>Column title</th><th>Trigger</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="2">Board 1</td>
+      <td rowspan="2"><code>5052697723</code></td>
+      <td>Status</td><td><code>color_mm2xte1s</code></td><td>Event Creator</td>
+      <td>"Event Created" → creates event<br>"Event Delete" → deletes event</td>
+    </tr>
+    <tr>
+      <td>Date</td><td><code>date_mm0g1qqn</code></td><td>Næste opkald</td>
+      <td>Any date change → updates existing event</td>
+    </tr>
+    <tr>
+      <td rowspan="2">Board 2</td>
+      <td rowspan="2"><code>5089650058</code></td>
+      <td>Status</td><td><code>color_mm2xkj25</code></td><td>Event Creator</td>
+      <td>"Event Created" → creates event<br>"Event Delete" → deletes event</td>
+    </tr>
+    <tr>
+      <td>Date</td><td><code>date_mkzancw6</code></td><td>Næste opkald</td>
+      <td>Any date change → updates existing event</td>
+    </tr>
+    <tr>
+      <td rowspan="2">Board 3</td>
+      <td rowspan="2"><code>5052958230</code></td>
+      <td>Status</td><td><code>color_mm2xy0y7</code></td><td>Event Creator</td>
+      <td>"Event Created" → creates event<br>"Event Delete" → deletes event</td>
+    </tr>
+    <tr>
+      <td>Date</td><td><code>date_mkxmb3rn</code></td><td>Operationsdato</td>
+      <td>Any date change → updates existing event</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2 class="sub-title">Email Webhooks</h2>
+<p>Endpoint: <span class="url">https://typeform-monday-webhook.vercel.app/api/monday-email</span></p>
+<p>One webhook per board, on the Email status column.</p>
+
+<table>
+  <thead>
+    <tr><th>Board</th><th>Board ID</th><th>Column ID</th><th>Column title</th><th>Trigger labels → email sent</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Board 1</td>
+      <td><code>5052697723</code></td>
+      <td><code>color_mm2fb1sj</code></td>
+      <td>Email status</td>
+      <td>"Email 1 sendt" → Email 1<br>"Email 2 sendt" → Email 2</td>
+    </tr>
+    <tr>
+      <td>Board 2</td>
+      <td><code>5089650058</code></td>
+      <td><code>color_mkzbweje</code></td>
+      <td>Email status</td>
+      <td>"Email 1 sendt" → Email 1<br>"Email 2 sendt" → Email 2<br>"Email 3 sendt" → Email 3</td>
+    </tr>
+    <tr>
+      <td>Board 3</td>
+      <td><code>5052958230</code></td>
+      <td><code>color_mm029qq0</code></td>
+      <td>Email status</td>
+      <td>"Email 4 sendt" → Email 4</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="box box-blue"><strong>Note on Email 4 and Board 3</strong><br>
+Email 4 can be triggered two ways: manually (by setting "Email 4 sendt" in Monday, which fires this webhook) or automatically (by the daily cron job checking the Operationsdato column). Both routes use the same duplicate prevention — the client will never receive the email twice.
+</div>
+
+<hr>
+
+<h2 class="sub-title">All Webhook Endpoints — Summary</h2>
+<table>
+  <thead>
+    <tr><th>Endpoint</th><th>Method</th><th>Called by</th><th>What it does</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>/api/webhook</code></td><td>POST</td><td>Typeform</td><td>Receives flight form submissions, updates Board 2</td></tr>
+    <tr><td><code>/api/calendar-webhook</code></td><td>POST</td><td>Monday (all 3 boards)</td><td>Creates/updates/deletes Google Calendar events</td></tr>
+    <tr><td><code>/api/meta-webhook</code></td><td>POST / GET</td><td>Meta (Facebook/Instagram)</td><td>Receives lead form submissions, creates items in Board 1</td></tr>
+    <tr><td><code>/api/wpforms-webhook</code></td><td>POST</td><td>WordPress (WPForms)</td><td>Receives website form submissions, creates items in Board 1</td></tr>
+    <tr><td><code>/api/monday-email</code></td><td>POST</td><td>Monday (all 3 boards)</td><td>Sends emails when Email status column changes</td></tr>
+    <tr><td><code>/api/email-cron</code></td><td>GET</td><td>Vercel (daily at 07:00 UTC)</td><td>Checks Board 3 dates, auto-sends Email 4 within 14-day window</td></tr>
+    <tr><td><code>/api/resend</code></td><td>POST</td><td>Dashboard (Resend button)</td><td>Manually retries a failed Typeform, WPForms, or email entry</td></tr>
+    <tr><td><code>/api/lead-events</code></td><td>GET</td><td>Dashboard</td><td>Returns event logs for Meta, WPForms, and Email tabs</td></tr>
+    <tr><td><code>/api/events</code></td><td>GET</td><td>Dashboard</td><td>Returns Typeform event log</td></tr>
+    <tr><td><code>/api/calendar-events</code></td><td>GET</td><td>Dashboard</td><td>Returns calendar sync log</td></tr>
+    <tr><td><code>/api/columns</code></td><td>GET</td><td>Dashboard</td><td>Fetches Board 2 column list for the reference card</td></tr>
+    <tr><td><code>/api/reset-failed</code></td><td>POST</td><td>Dashboard (Reset counter)</td><td>Stamps the reset timestamp for a given tab's failed counter</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+<!-- ══ SECTION 9 — BOARDS ══════════════════════════════════════════════════════ -->
+<div class="content page-break">
+<h1 class="section-title" id="boards">9. Board Overview</h1>
+
+<table>
+  <thead>
+    <tr><th>Board</th><th>ID</th><th>Purpose</th><th>Lead sources</th><th>Emails</th><th>Calendar</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Board 1</strong></td>
+      <td><code>5052697723</code></td>
+      <td>Primary leads — first contact</td>
+      <td>Meta ads, WordPress website</td>
+      <td>Email 1, Email 2</td>
+      <td>sally@haareksperten.com</td>
+    </tr>
+    <tr>
+      <td><strong>Board 2</strong></td>
+      <td><code>5089650058</code></td>
+      <td>Booked clients — flight info flow</td>
+      <td>Typeform (updates existing items)</td>
+      <td>Email 1, Email 2, Email 3</td>
+      <td>zari@haareksperten.com</td>
+    </tr>
+    <tr>
+      <td><strong>Board 3</strong></td>
+      <td><code>5052958230</code></td>
+      <td>Pre-operation clients</td>
+      <td>—</td>
+      <td>Email 4 (manual + auto 14-day timer)</td>
+      <td>info@haareksperten.com</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+<!-- ══ SECTION 10 — INFRASTRUCTURE ═══════════════════════════════════════════ -->
+<div class="content page-break">
+<h1 class="section-title" id="infrastructure">10. Technical Infrastructure</h1>
+
+<div class="two-col">
+  <div class="card-box">
+    <h4>⚡ Vercel (Hosting)</h4>
+    <p>Runs the entire system on the cloud. Each endpoint is a serverless function — it starts when a request arrives and shuts down when done. Vercel Hobby plan: max 12 functions (project is at exactly 12).</p>
+  </div>
+  <div class="card-box">
+    <h4>🗄 Vercel KV (Database)</h4>
+    <p>A fast in-memory database (Redis). Stores event logs, duplicate-prevention locks, calendar event references, and reset timestamps. Logs keep the last 200 entries per integration.</p>
+  </div>
+  <div class="card-box">
+    <h4>📁 Vercel Blob (File storage)</h4>
+    <p>Stores the 6 PDF attachments privately. Files are not publicly accessible — the system fetches them using a secret token when building emails.</p>
+  </div>
+  <div class="card-box">
+    <h4>📅 Monday.com API</h4>
+    <p>Used to create items, update columns, post comments, read column values, and fetch item details. Includes automatic rate-limit retry with exponential backoff.</p>
+  </div>
+  <div class="card-box">
+    <h4>✉️ Gmail API (Google OAuth2)</h4>
+    <p>Sends emails from info@haareksperten.com. Uses a long-lived refresh token so it never needs a password re-entry. Scopes: gmail.send + calendar.</p>
+  </div>
+  <div class="card-box">
+    <h4>📆 Google Calendar API</h4>
+    <p>Creates, updates, and deletes events on three separate Google Calendar accounts (one per board). Uses the same Google OAuth2 credentials as Gmail.</p>
+  </div>
+</div>
+
+<h2 class="sub-title">PDF files stored in Vercel Blob</h2>
+<table>
+  <thead><tr><th>File</th><th>Used in</th></tr></thead>
+  <tbody>
+    <tr><td>1. Pakkeindhold og dit forløb.pdf</td><td>Email 1</td></tr>
+    <tr><td>2. Før og efter operationen.pdf</td><td>Email 1</td></tr>
+    <tr><td>3. Flyinformationer og oplysninger.pdf</td><td>Email 1</td></tr>
+    <tr><td>4. Alt du skal vide efter din hårtransplantation.pdf</td><td>Email 4</td></tr>
+    <tr><td>5. Plan og program.pdf</td><td>Email 4</td></tr>
+    <tr><td>6. Klinikkens kontrakt.pdf</td><td>Email 2</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sub-title">Secret environment variables</h2>
+<table>
+  <thead><tr><th>Variable</th><th>What it unlocks</th></tr></thead>
+  <tbody>
+    <tr><td><code>MONDAY_API_KEY</code></td><td>Full access to Monday.com</td></tr>
+    <tr><td><code>GOOGLE_CLIENT_ID</code></td><td>Identifies the Google Cloud app</td></tr>
+    <tr><td><code>GOOGLE_CLIENT_SECRET</code></td><td>Password for the Google Cloud app</td></tr>
+    <tr><td><code>GOOGLE_REFRESH_TOKEN</code></td><td>Permanent access to Gmail + Google Calendar</td></tr>
+    <tr><td><code>GMAIL_USER</code></td><td>The sending address: info@haareksperten.com</td></tr>
+    <tr><td><code>BLOB_READ_WRITE_TOKEN</code></td><td>Access to the private PDF files</td></tr>
+    <tr><td><code>META_PAGE_ACCESS_TOKEN</code></td><td>Read leads from Facebook/Instagram</td></tr>
+    <tr><td><code>META_WEBHOOK_VERIFY_TOKEN</code></td><td>Verifies the Meta webhook connection</td></tr>
+    <tr><td><code>CRON_SECRET</code></td><td>Protects the daily email timer from outside calls</td></tr>
+    <tr><td><code>KV_URL</code> / <code>KV_REST_API_*</code></td><td>Database connection (auto-managed by Vercel)</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+<!-- ══ SECTION 11 — ACCESS ════════════════════════════════════════════════════ -->
+<div class="content page-break">
+<h1 class="section-title" id="access">11. How to Control, Edit &amp; Access</h1>
+
+<h2 class="sub-title">GitHub — The Code Repository</h2>
+<div class="box box-blue"><strong>URL</strong> https://github.com/vincenzohashiro/typeform-monday-webhook</div>
+
+<p>GitHub is where all the code files are stored. Every change ever made is recorded with a description of what changed and why. You can always go back to any previous version if something breaks.</p>
+
+<h3 class="sub-sub">How to access it</h3>
+<ol>
+  <li>Go to github.com and log in as <strong>vincenzohashiro</strong></li>
+  <li>Click Repositories in the left sidebar</li>
+  <li>Click <strong>typeform-monday-webhook</strong></li>
+</ol>
+
+<h3 class="sub-sub">What you'll see</h3>
+<ul>
+  <li><strong>All files</strong> — the code files in folders: <code>api/</code> (the endpoints), <code>lib/</code> (shared logic), <code>public/</code> (the dashboard)</li>
+  <li><strong>Commits</strong> — a history of every change, with descriptions of what was done. Click any commit to see exactly what lines changed</li>
+  <li><strong>The main branch</strong> — whatever is here is what's running live right now</li>
+</ul>
+
+<h3 class="sub-sub">How changes get deployed</h3>
+<div class="flow">
+  <div class="flow-step">Developer edits code</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Pushed to GitHub</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Vercel detects new code automatically</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Builds &amp; deploys in ~60 seconds</div><div class="flow-arrow">→</div>
+  <div class="flow-step">Live system updated</div>
+</div>
+
+<div class="box box-red"><strong>Important</strong> Avoid editing code files directly in the GitHub browser. A single typo can break the live system. All code changes should go through a developer.</div>
+
+<hr>
+
+<h2 class="sub-title">Vercel — The Hosting Platform</h2>
+<div class="box box-blue"><strong>URL</strong> vercel.com → log in → vincenzohashiros-projects → typeform-monday-webhook</div>
+
+<h3 class="sub-sub">1. Deployments</h3>
+<p>Shows every time the system was updated. Each deployment has a status: <strong>Ready</strong> (working), <strong>Building</strong> (in progress), or <strong>Error</strong> (failed — click to see why).</p>
+<p><strong>To redeploy manually:</strong> Click ··· next to a deployment → Redeploy. Required after changing environment variables.</p>
+
+<h3 class="sub-sub">2. Environment Variables (Settings → Environment Variables)</h3>
+<p>The secret keys the system needs to connect to external services. Never stored in the code — kept here, encrypted.</p>
+<p><strong>To edit:</strong> Click the variable → pencil icon → change value → Save → then redeploy.</p>
+<div class="box box-orange"><strong>Always redeploy after changing any environment variable.</strong> The running system does not automatically pick up the new value until redeployed.</div>
+
+<h3 class="sub-sub">3. Logs</h3>
+<p>Shows everything the system does — every request, error, and response. The main diagnostic tool.</p>
+<ul>
+  <li>Set timeline to <strong>Last 30 minutes</strong> when investigating a recent issue</li>
+  <li>Search for an endpoint name (e.g. <code>monday-email</code>) to filter results</li>
+  <li>Click any entry to see full details in the right panel</li>
+  <li>Click <strong>Live</strong> to watch requests arrive in real time</li>
+  <li>Use the <strong>Error</strong> checkbox to show only failing requests</li>
+</ul>
+<table>
+  <thead><tr><th>Status code</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td>200</td><td>Success — everything worked</td></tr>
+    <tr><td>304</td><td>Not modified — browser used cached data (not an error)</td></tr>
+    <tr><td>400</td><td>Bad request — the data sent was invalid</td></tr>
+    <tr><td>401</td><td>Unauthorized — wrong or missing secret</td></tr>
+    <tr><td>404</td><td>Endpoint not found</td></tr>
+    <tr><td>500</td><td>Server error — something crashed, check the error message</td></tr>
+  </tbody>
+</table>
+
+<h3 class="sub-sub">4. Cron Jobs</h3>
+<p>Shows the daily email timer for Board 3. The job <code>/api/email-cron</code> runs every day at <strong>07:00 UTC</strong> (09:00 Danish summer time). You can click <strong>Run</strong> to trigger it manually for testing.</p>
+
+<hr>
+
+<h2 class="sub-title">Vercel Blob — PDF File Storage</h2>
+<p><strong>Where:</strong> Vercel dashboard → Storage → Blob</p>
+<p>Stores the 6 PDF attachments privately. To add or replace a PDF:</p>
+<ol>
+  <li>Go to Vercel → Storage → Blob</li>
+  <li>Click <strong>Upload</strong> and select the PDF</li>
+  <li>Copy the URL it gives you</li>
+  <li>Give the URL to a developer to update the email config in the code</li>
+</ol>
+<div class="box box-orange"><strong>Uploading a file to Blob alone does not attach it to any email.</strong> A developer must update the code in <code>lib/emailConfig.js</code> to reference the new URL.</div>
+
+<hr>
+
+<h2 class="sub-title">Vercel KV — The Database</h2>
+<p><strong>Where:</strong> Vercel dashboard → Storage → KV</p>
+<p>The database that stores all logs and duplicate-prevention locks. You generally do not need to touch this — the dashboard already shows the data in readable form. Only access it directly if you need to manually delete a stuck lock to force a resend.</p>
+
+<hr>
+
+<h2 class="sub-title">Monday.com — Registering Webhooks</h2>
+<p>Every webhook must be manually registered in Monday. This is not automatic — if a webhook is missing, the corresponding automation will not fire.</p>
+
+<div class="step"><div class="step-num">1</div><div>Open the board in Monday</div></div>
+<div class="step"><div class="step-num">2</div><div>Click <strong>Integrate</strong> (top right)</div></div>
+<div class="step"><div class="step-num">3</div><div>Search for <strong>"Webhooks"</strong></div></div>
+<div class="step"><div class="step-num">4</div><div>Choose trigger: <strong>"When a column changes"</strong></div></div>
+<div class="step"><div class="step-num">5</div><div>Select the specific column (status or date)</div></div>
+<div class="step"><div class="step-num">6</div><div>Paste the endpoint URL</div></div>
+<div class="step"><div class="step-num">7</div><div>Click <strong>Save / Activate</strong></div></div>
+
+</div>
+
+<!-- ══ SECTION 12 — QUICK REF ═════════════════════════════════════════════════ -->
+<div class="content page-break">
+<h1 class="section-title" id="quickref">12. Quick Reference</h1>
+
+<h2 class="sub-title">Problem → Where to look → What to do</h2>
+<table>
+  <thead><tr><th>Problem</th><th>Where to look</th><th>Action</th></tr></thead>
+  <tbody>
+    <tr><td>Email not sending after status change</td><td>Vercel → Logs → search <code>monday-email</code></td><td>Check error. Verify Monday webhook is registered. Check Gmail API is enabled in Google Cloud</td></tr>
+    <tr><td>Email sent twice</td><td>Email Sent tab → check for Duplicate badge</td><td>Duplicate badge = working correctly (only 1 email sent). If two "Sent" entries: atomic lock fix already in place — won't recur</td></tr>
+    <tr><td>Calendar not syncing</td><td>Vercel → Logs → search <code>calendar-webhook</code></td><td>Verify Monday webhook is registered for both status and date columns on that board</td></tr>
+    <tr><td>Meta lead error "object does not exist"</td><td>Meta Leads tab</td><td>Phantom test event from Meta — safe to ignore. Click Reset counter</td></tr>
+    <tr><td>WPForms submission missing from Monday</td><td>WPForms tab → find the row → Resend button</td><td>Click Resend to recreate the Monday item instantly</td></tr>
+    <tr><td>Email 4 not sent automatically</td><td>Vercel → Cron Jobs → check last run</td><td>Verify CRON_SECRET is set. Click Run to trigger manually. Check Operationsdato column is filled in Monday</td></tr>
+    <tr><td>Google Calendar or Gmail stopped working</td><td>Vercel → Logs</td><td>Refresh token likely expired. Regenerate in OAuth Playground with gmail.send + calendar scopes. Update GOOGLE_REFRESH_TOKEN in Vercel env vars. Redeploy</td></tr>
+    <tr><td>Dashboard shows "0" everywhere</td><td>Vercel → Logs → check /api/events and /api/lead-events</td><td>Check KV database is connected. Verify KV_URL env var is set</td></tr>
+    <tr><td>New PDF needs adding to an email</td><td>Vercel → Storage → Blob</td><td>Upload file, copy URL, give to developer to update lib/emailConfig.js</td></tr>
+    <tr><td>Something broke after a code change</td><td>Vercel → Deployments</td><td>Find the last working deployment → ··· → Redeploy to roll back</td></tr>
+    <tr><td>Need to add a new board or email type</td><td>—</td><td>Developer must update lib/emailConfig.js and register new Monday webhook</td></tr>
+    <tr><td>MONDAY_API_KEY expired / rotated</td><td>Vercel → Settings → Environment Variables</td><td>Update MONDAY_API_KEY → Save → Redeploy</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2 class="sub-title">All URLs at a glance</h2>
+<table>
+  <thead><tr><th>Resource</th><th>URL</th></tr></thead>
+  <tbody>
+    <tr><td>Live dashboard</td><td>https://typeform-monday-webhook.vercel.app</td></tr>
+    <tr><td>Typeform webhook URL</td><td>https://typeform-monday-webhook.vercel.app/api/webhook</td></tr>
+    <tr><td>Calendar webhook URL</td><td>https://typeform-monday-webhook.vercel.app/api/calendar-webhook</td></tr>
+    <tr><td>Meta webhook URL</td><td>https://typeform-monday-webhook.vercel.app/api/meta-webhook</td></tr>
+    <tr><td>WPForms webhook URL</td><td>https://typeform-monday-webhook.vercel.app/api/wpforms-webhook</td></tr>
+    <tr><td>Monday email webhook URL</td><td>https://typeform-monday-webhook.vercel.app/api/monday-email</td></tr>
+    <tr><td>GitHub repository</td><td>https://github.com/vincenzohashiro/typeform-monday-webhook</td></tr>
+    <tr><td>Vercel project</td><td>https://vercel.com → vincenzohashiros-projects → typeform-monday-webhook</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+<!-- ══ PRINT BUTTON ════════════════════════════════════════════════════════════ -->
+<button class="print-btn no-print" onclick="window.print()">⬇ Save as PDF</button>
+
+</body>
+</html>
