@@ -291,6 +291,14 @@
           <li>Monday webhook setup</li>
         </ul>
       </li>
+      <li><a href="#monday-automations">Monday Native Automations</a>
+        <ul class="sub-items">
+          <li>Board 1 — Nye leads (5 automations)</li>
+          <li>Board 2 — Zari's board (status → group + Board 3 transition)</li>
+          <li>Board 3 — Aftercare board (email, calendar, operation-day)</li>
+          <li>How native automations and the custom system work together</li>
+        </ul>
+      </li>
       <li><a href="#quickref">Quick Reference</a></li>
     </ol>
   </div>
@@ -953,9 +961,160 @@ Email 4 can be triggered two ways: manually (by setting "Email 4 sendt" in Monda
 
 </div>
 
-<!-- ══ SECTION 12 — QUICK REF ═════════════════════════════════════════════════ -->
+<!-- ══ SECTION 12 — MONDAY NATIVE AUTOMATIONS ════════════════════════════════ -->
 <div class="content page-break">
-<h1 class="section-title" id="quickref">12. Quick Reference</h1>
+<h1 class="section-title" id="monday-automations">12. Monday Native Automations</h1>
+
+<p>In addition to the custom webhook system, Monday has its own built-in automation rules configured directly inside each board. These run entirely inside Monday — no external code is involved. They handle things like moving items between groups, setting dates, and triggering the custom webhooks at the right time.</p>
+
+<div class="box box-blue"><strong>How to find these in Monday</strong> Open a board → click Automate (top right) → you will see a list of all active automations. Each one shows how many times it has run and its success rate.</div>
+
+<hr>
+
+<h2 class="sub-title">Board 1 — Nye leads (ID: 5052697723)</h2>
+
+<h3 class="sub-sub">1. Lead Modtaget date stamp</h3>
+<div class="flow">
+  <div class="flow-step">When item is created</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Set "Lead Modtaget" date to today</div>
+</div>
+<p>Every new lead automatically gets today's date stamped on it the moment it's created. This date is used to track how long ago the lead arrived and powers the 14-day no-response automation below.</p>
+
+<h3 class="sub-sub">2. 14-day no response</h3>
+<div class="flow">
+  <div class="flow-step">14 days after "Lead Modtaget" arrives</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Set Stadie to "No Response"</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Move item to "Ingen svar/email..." group</div>
+</div>
+<p>If a lead has not responded or submitted anything within 14 days of arriving, Monday automatically moves them to the "No Response" group. This keeps the active pipeline clean — only engaged leads stay in the main view.</p>
+
+<h3 class="sub-sub">3. Set Kilde to "Website" for non-Meta/Google leads</h3>
+<div class="flow">
+  <div class="flow-step">When item is created</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Only if Kilde is NOT Google (or Meta, etc.)</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Set Kilde to "Website"</div>
+</div>
+<p>Meta and Google leads arrive with their source label already set by the integration. Website leads (from WPForms) do not have a source set automatically, so this automation fills it in as "Website" for any new item that didn't get a source from another integration.</p>
+
+<h3 class="sub-sub">4. BillederUploaded → Move to "Mangler feedback"</h3>
+<div class="flow">
+  <div class="flow-step">When BillederUploaded changes to "Uploaded"</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Move item to "Mangler feedback" group</div>
+</div>
+<p>When a lead uploads their photos (BillederFiles column gets a value), the BillederUploaded status is set to "Uploaded" and the item is automatically moved to the "Mangler feedback" group — signalling to the team that photos are ready to review.</p>
+
+<h3 class="sub-sub">5. BillederUploaded → Set Stadie to "Completed Pictures"</h3>
+<div class="flow">
+  <div class="flow-step">When BillederUploaded changes to "Uploaded"</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Set Stadie to "Completed Pictures"</div>
+</div>
+<p>At the same time as the group move above, the main status (Stadie) is also updated to reflect that pictures have been received. This gives the team a visual status indicator directly on the board.</p>
+
+<hr>
+
+<h2 class="sub-title">Board 2 — Zari's board (ID: 5089650058)</h2>
+
+<h3 class="sub-sub">Status → Group automations</h3>
+<p>Every status option in Board 2 has a corresponding group. When the status is changed to any of these labels, Monday automatically moves the item to the matching group. This keeps the board organised without manual drag-and-drop.</p>
+
+<table>
+  <thead><tr><th>When Status changes to</th><th>Item is moved to group</th></tr></thead>
+  <tbody>
+    <tr><td>Ingen svare/gået tabt</td><td>Ingen svar/gået tabt group</td></tr>
+    <tr><td>I Fremtiden</td><td>I Fremtiden group</td></tr>
+    <tr><td>Overvejer/vender selv tilbage</td><td>Overvejer group</td></tr>
+    <tr><td>I process/følg op</td><td>I process/følg op group</td></tr>
+    <tr><td>Booket/sendt flyinformationer</td><td>Booket group</td></tr>
+    <tr><td>Vender tilbage med dato</td><td>Vender tilbage med dato group</td></tr>
+    <tr><td>Item moved to Afventer beslutning</td><td>Afventer beslutning group</td></tr>
+  </tbody>
+</table>
+
+<h3 class="sub-sub">Board 2 → Board 3 transition (the most important Board 2 automation)</h3>
+<div class="flow">
+  <div class="flow-step">Form Submitted = Yes</div>
+  <div class="flow-arrow">AND</div>
+  <div class="flow-step">Email status = "Email 3 sendt"</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Move item to Board 3 (Aftercare)</div>
+</div>
+<p>This is the key transition in the entire client pipeline. When a client has:</p>
+<ol>
+  <li>Submitted their flight information via Typeform (Form Submitted = Yes)</li>
+  <li>Received their booking confirmation (Email 3 sendt)</li>
+</ol>
+<p>...Monday automatically moves the item from Board 2 (Zari's active clients) to Board 3 (the Aftercare board), where the operation-day flow takes over.</p>
+
+<hr>
+
+<h2 class="sub-title">Board 3 — Aftercare board (ID: 5052958230)</h2>
+
+<h3 class="sub-sub">1. 14 days before Operationsdato → Send Email 4</h3>
+<div class="flow">
+  <div class="flow-step">14 days before Operationsdato</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Set Email status to "Email 4 sendt"</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Custom webhook fires → Email 4 sent</div>
+</div>
+<p>This Monday automation is the <strong>primary trigger</strong> for Email 4. It works together with the custom daily cron job (which acts as a failsafe). When Monday sets the Email status to "Email 4 sendt", the webhook at <code>/api/monday-email</code> fires and sends the stay plan email with PDF attachments.</p>
+
+<h3 class="sub-sub">2. On Operationsdato → Move to "Operationsdag" group</h3>
+<div class="flow">
+  <div class="flow-step">When Operationsdato arrives (today = operation date)</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Move item to "Operationsdag" group</div>
+</div>
+<p>On the actual day of the operation, Monday moves the client's item to the "Operationsdag" group so the team can see at a glance who is having their operation today.</p>
+
+<h3 class="sub-sub">3. On Operationsdato → Move to "Afsludette" group</h3>
+<div class="flow">
+  <div class="flow-step">When Operationsdato arrives</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Move item to "Afsludette" group</div>
+</div>
+<p>After the operation is completed, the client's item is moved to the "Afsludette" (Completed) group, marking the end of the active pipeline for that client.</p>
+
+<h3 class="sub-sub">4. Moved to "Booket" group → Create calendar event</h3>
+<div class="flow">
+  <div class="flow-step">Item moved to "Bookede. Send transport/hotel oplysninger" group</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Set Event Creator to "Event Created"</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Custom webhook fires → Google Calendar event created</div>
+</div>
+<p>When a client is moved to the Booked group, Monday automatically sets the "Event Creator" status to "Event Created". This triggers the custom calendar webhook (<code>/api/calendar-webhook</code>), which creates the Google Calendar event on <code>info@haareksperten.com</code>'s calendar. This means the team never has to manually create calendar events — it happens automatically the moment a client is marked as booked.</p>
+
+<hr>
+
+<h2 class="sub-title">How native automations and the custom system work together</h2>
+<p>The two systems are designed to complement each other. Monday's native automations handle the simple logic (move to group, set a date, trigger a status change), while the custom webhook system handles the heavy lifting (send emails with PDFs, create Google Calendar events, log everything to the dashboard).</p>
+
+<table>
+  <thead><tr><th>Trigger (Monday native)</th><th>What it triggers in the custom system</th></tr></thead>
+  <tbody>
+    <tr><td>Set Email status to "Email 1 sendt"</td><td>/api/monday-email → sends Email 1 with 3 PDF attachments</td></tr>
+    <tr><td>Set Email status to "Email 2 sendt"</td><td>/api/monday-email → sends Email 2 with clinic contract PDF</td></tr>
+    <tr><td>Set Email status to "Email 3 sendt"</td><td>/api/monday-email → sends Email 3 (booking confirmation)</td></tr>
+    <tr><td>14 days before Operationsdato → "Email 4 sendt"</td><td>/api/monday-email → sends Email 4 with stay plan + hair plan PDFs</td></tr>
+    <tr><td>Set Event Creator to "Event Created"</td><td>/api/calendar-webhook → creates Google Calendar event</td></tr>
+    <tr><td>Change date column</td><td>/api/calendar-webhook → updates existing Google Calendar event</td></tr>
+    <tr><td>Set Event Creator to "Event Delete"</td><td>/api/calendar-webhook → deletes Google Calendar event</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+<!-- ══ SECTION 13 — QUICK REF ═════════════════════════════════════════════════ -->
+<div class="content page-break">
+<h1 class="section-title" id="quickref">13. Quick Reference</h1>
 
 <h2 class="sub-title">Problem → Where to look → What to do</h2>
 <table>
