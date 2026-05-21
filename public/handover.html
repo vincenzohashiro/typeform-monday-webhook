@@ -697,8 +697,8 @@
       <table class="env-table">
         <thead>
           <tr>
-            <th style="width:30%">Variable</th>
-            <th style="width:45%">Value</th>
+            <th style="width:32%">Variable</th>
+            <th style="width:42%">Value</th>
             <th>Notes</th>
           </tr>
         </thead>
@@ -707,11 +707,6 @@
             <td class="env-name">MONDAY_API_KEY</td>
             <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
             <td class="env-hint">Monday.com API token</td>
-          </tr>
-          <tr>
-            <td class="env-name">MONDAY_BOARD_ID</td>
-            <td><input class="env-val" type="text" value="5089650058" spellcheck="false" /></td>
-            <td class="env-hint">Board 2 — fixed value</td>
           </tr>
           <tr>
             <td class="env-name">GOOGLE_CLIENT_ID</td>
@@ -739,24 +734,54 @@
             <td class="env-hint">Vercel Blob — for downloading PDF attachments</td>
           </tr>
           <tr>
-            <td class="env-name">META_WEBHOOK_VERIFY_TOKEN</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Must match Meta Business Suite webhook setting</td>
-          </tr>
-          <tr>
             <td class="env-name">CRON_SECRET</td>
             <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
             <td class="env-hint">Vercel sends this when running the daily cron job</td>
           </tr>
           <tr>
+            <td class="env-name">TYPEFORM_TOKEN</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Typeform API token</td>
+          </tr>
+          <tr>
+            <td class="env-name">WPFORMS_WEBHOOK_SECRET</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">WPForms webhook secret for signature verification</td>
+          </tr>
+          <tr>
+            <td class="env-name">META_PAGE_ACCESS_TOKEN</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Meta page access token — used to fetch lead data</td>
+          </tr>
+          <tr>
+            <td class="env-name">META_APP_SECRET</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Meta app secret — for webhook signature verification</td>
+          </tr>
+          <tr>
+            <td class="env-name">META_WEBHOOK_VERIFY_TOKEN</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Must match Meta Business Suite webhook setting</td>
+          </tr>
+          <tr>
             <td class="env-name">KV_REST_API_URL</td>
             <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Auto-set by Vercel KV store — copy from Vercel</td>
+            <td class="env-hint">Vercel KV (Redis) — auto-set when KV store is connected</td>
           </tr>
           <tr>
             <td class="env-name">KV_REST_API_TOKEN</td>
             <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Auto-set by Vercel KV store — copy from Vercel</td>
+            <td class="env-hint">Vercel KV — auto-set when KV store is connected</td>
+          </tr>
+          <tr>
+            <td class="env-name">KV_REST_API_READ_ONLY_TOKEN</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Vercel KV — auto-set when KV store is connected</td>
+          </tr>
+          <tr>
+            <td class="env-name">KV_REST_API_REDIS_URL</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Vercel KV — auto-set when KV store is connected</td>
           </tr>
         </tbody>
       </table>
