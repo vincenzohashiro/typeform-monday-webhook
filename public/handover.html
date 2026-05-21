@@ -357,24 +357,29 @@
     <!-- 3. ENV VARS -->
     <div class="section" id="envvars">
       <div class="section-title">3. Environment Variables</div>
-      <p>You need to add these variables in <strong>Vercel → Settings → Environment Variables</strong> in order for the API to work:</p>
-      <br>
-      <code>MONDAY_API_KEY</code><br><br>
-      <code>GOOGLE_CLIENT_ID</code><br><br>
-      <code>GOOGLE_CLIENT_SECRET</code><br><br>
-      <code>GOOGLE_REFRESH_TOKEN</code><br><br>
-      <code>GMAIL_USER</code><br><br>
-      <code>BLOB_READ_WRITE_TOKEN</code><br><br>
-      <code>CRON_SECRET</code><br><br>
-      <code>TYPEFORM_TOKEN</code><br><br>
-      <code>WPFORMS_WEBHOOK_SECRET</code><br><br>
-      <code>META_PAGE_ACCESS_TOKEN</code><br><br>
-      <code>META_APP_SECRET</code><br><br>
-      <code>META_WEBHOOK_VERIFY_TOKEN</code><br><br>
-      <code>KV_REST_API_URL</code><br><br>
-      <code>KV_REST_API_TOKEN</code><br><br>
-      <code>KV_REST_API_READ_ONLY_TOKEN</code><br><br>
-      <code>KV_REST_API_REDIS_URL</code>
+      <p>You need to add all of these in <strong>Vercel → Settings → Environment Variables</strong> for the system to work. Get the values from the person handing over the project.</p>
+
+      <table>
+        <thead><tr><th style="width:45%">Variable</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>MONDAY_API_KEY</code></td><td>Monday.com API token</td></tr>
+          <tr><td><code>GOOGLE_CLIENT_ID</code></td><td>Google OAuth2 app — required for Gmail &amp; Calendar</td></tr>
+          <tr><td><code>GOOGLE_CLIENT_SECRET</code></td><td>Google OAuth2 app — required for Gmail &amp; Calendar</td></tr>
+          <tr><td><code>GOOGLE_REFRESH_TOKEN</code></td><td>Google OAuth2 refresh token — required for sending emails and creating calendar events. If emails stop working with an <code>invalid_grant</code> error, this needs to be regenerated via Google OAuth Playground.</td></tr>
+          <tr><td><code>GMAIL_USER</code></td><td>The Gmail address emails are sent from</td></tr>
+          <tr><td><code>BLOB_READ_WRITE_TOKEN</code></td><td>Vercel Blob — required to fetch PDF attachments</td></tr>
+          <tr><td><code>CRON_SECRET</code></td><td>Required for the daily auto-email cron job to run</td></tr>
+          <tr><td><code>TYPEFORM_TOKEN</code></td><td>Typeform API token</td></tr>
+          <tr><td><code>WPFORMS_WEBHOOK_SECRET</code></td><td>WPForms webhook secret</td></tr>
+          <tr><td><code>META_PAGE_ACCESS_TOKEN</code></td><td>Meta — required to fetch lead data from Facebook forms</td></tr>
+          <tr><td><code>META_APP_SECRET</code></td><td>Meta — required to verify incoming webhook requests</td></tr>
+          <tr><td><code>META_WEBHOOK_VERIFY_TOKEN</code></td><td>Meta — must match what is set in Meta Business Suite</td></tr>
+          <tr><td><code>KV_REST_API_URL</code></td><td>Vercel KV (Redis) — auto-generated when KV store is connected</td></tr>
+          <tr><td><code>KV_REST_API_TOKEN</code></td><td>Vercel KV — auto-generated when KV store is connected</td></tr>
+          <tr><td><code>KV_REST_API_READ_ONLY_TOKEN</code></td><td>Vercel KV — auto-generated when KV store is connected</td></tr>
+          <tr><td><code>KV_REST_API_REDIS_URL</code></td><td>Vercel KV — auto-generated when KV store is connected</td></tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- 4. TYPEFORM -->
