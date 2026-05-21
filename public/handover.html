@@ -173,6 +173,44 @@
     .toc li { margin-bottom: 5px; font-size: 13px; }
     .toc a { color: #0052cc; text-decoration: none; }
 
+    /* ── Env var table ─────────────────────────────────────────────────── */
+    .env-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 12px; }
+    .env-table thead th {
+      background: #172b4d;
+      color: #fff;
+      text-align: left;
+      padding: 9px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .env-table tbody td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #dfe1e6;
+      vertical-align: middle;
+    }
+    .env-table tbody tr:last-child td { border-bottom: none; }
+    .env-table tbody tr:nth-child(even) { background: #f8f9fa; }
+    .env-name {
+      font-family: "SF Mono", "Fira Mono", monospace;
+      font-size: 11px;
+      color: #5243aa;
+      white-space: nowrap;
+    }
+    .env-val {
+      width: 100%;
+      font-family: "SF Mono", "Fira Mono", monospace;
+      font-size: 11px;
+      color: #172b4d;
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+      padding: 5px 8px;
+      background: #fff;
+      outline: none;
+    }
+    .env-val:focus { border-color: #0052cc; box-shadow: 0 0 0 2px #e8f0fe; }
+    .env-hint { font-size: 11px; color: #5e6c84; }
+
     /* ── Print ─────────────────────────────────────────────────────────── */
     @media print {
       #saveBtn { display: none; }
@@ -185,6 +223,13 @@
       h3 { break-after: avoid; }
       table { break-inside: avoid; }
       .callout { break-inside: avoid; }
+      .env-val {
+        border: none;
+        border-bottom: 1px solid #aaa;
+        border-radius: 0;
+        padding: 2px 4px;
+        background: transparent;
+      }
     }
   </style>
 </head>
@@ -239,6 +284,7 @@
         <li><a href="#issues">Common Issues &amp; Fixes</a></li>
         <li><a href="#where">Where to Find Everything</a></li>
         <li><a href="#changes">How to Make Changes</a></li>
+        <li><a href="#secrets">Environment Variable Values</a></li>
       </ol>
     </div>
 
@@ -636,6 +682,87 @@
 
       <div class="callout warn">
         <strong>After any code change:</strong> push to GitHub master → Vercel deploys automatically in ~30 seconds. After any environment variable change: go to Vercel → Deployments → latest → Redeploy (new env vars don't apply to previous deployments automatically).
+      </div>
+    </div>
+
+    <!-- 14. ENV VARS -->
+    <div class="section" id="secrets">
+      <div class="section-title">14. Environment Variable Values</div>
+      <p>Copy these from <strong>Vercel → Settings → Environment Variables</strong> before saving this as PDF. Click any value field and type/paste the value — it will appear in the PDF.</p>
+
+      <div class="callout warn">
+        <strong>Keep this PDF private.</strong> It contains the keys that control live emails, Monday data, and Google Calendar access.
+      </div>
+
+      <table class="env-table">
+        <thead>
+          <tr>
+            <th style="width:30%">Variable</th>
+            <th style="width:45%">Value</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="env-name">MONDAY_API_KEY</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Monday.com API token</td>
+          </tr>
+          <tr>
+            <td class="env-name">MONDAY_BOARD_ID</td>
+            <td><input class="env-val" type="text" value="5089650058" spellcheck="false" /></td>
+            <td class="env-hint">Board 2 — fixed value</td>
+          </tr>
+          <tr>
+            <td class="env-name">GOOGLE_CLIENT_ID</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Google Cloud Console → Credentials</td>
+          </tr>
+          <tr>
+            <td class="env-name">GOOGLE_CLIENT_SECRET</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Google Cloud Console → Credentials</td>
+          </tr>
+          <tr>
+            <td class="env-name">GOOGLE_REFRESH_TOKEN</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Regenerate via OAuth Playground if expired (invalid_grant error)</td>
+          </tr>
+          <tr>
+            <td class="env-name">GMAIL_USER</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Gmail address emails are sent from</td>
+          </tr>
+          <tr>
+            <td class="env-name">BLOB_READ_WRITE_TOKEN</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Vercel Blob — for downloading PDF attachments</td>
+          </tr>
+          <tr>
+            <td class="env-name">META_WEBHOOK_VERIFY_TOKEN</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Must match Meta Business Suite webhook setting</td>
+          </tr>
+          <tr>
+            <td class="env-name">CRON_SECRET</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Vercel sends this when running the daily cron job</td>
+          </tr>
+          <tr>
+            <td class="env-name">KV_REST_API_URL</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Auto-set by Vercel KV store — copy from Vercel</td>
+          </tr>
+          <tr>
+            <td class="env-name">KV_REST_API_TOKEN</td>
+            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
+            <td class="env-hint">Auto-set by Vercel KV store — copy from Vercel</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <strong>How to add these to a new Vercel project:</strong> Vercel dashboard → the project → Settings → Environment Variables → add each variable → save → Redeploy.
       </div>
     </div>
 
