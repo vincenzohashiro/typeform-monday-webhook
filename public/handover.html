@@ -284,7 +284,6 @@
         <li><a href="#issues">Common Issues &amp; Fixes</a></li>
         <li><a href="#where">Where to Find Everything</a></li>
         <li><a href="#changes">How to Make Changes</a></li>
-        <li><a href="#secrets">Environment Variable Values</a></li>
       </ol>
     </div>
 
@@ -687,112 +686,6 @@
 
       <div class="callout warn">
         <strong>After any code change:</strong> push to GitHub master → Vercel deploys automatically in ~30 seconds. After any environment variable change: go to Vercel → Deployments → latest → Redeploy (new env vars don't apply to previous deployments automatically).
-      </div>
-    </div>
-
-    <!-- 14. ENV VARS -->
-    <div class="section" id="secrets">
-      <div class="section-title">14. Environment Variable Values</div>
-      <p>Copy these from <strong>Vercel → Settings → Environment Variables</strong> before saving this as PDF. Click any value field and type/paste the value — it will appear in the PDF.</p>
-
-      <div class="callout warn">
-        <strong>Keep this PDF private.</strong> It contains the keys that control live emails, Monday data, and Google Calendar access.
-      </div>
-
-      <table class="env-table">
-        <thead>
-          <tr>
-            <th style="width:32%">Variable</th>
-            <th style="width:42%">Value</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="env-name">MONDAY_API_KEY</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Monday.com API token</td>
-          </tr>
-          <tr>
-            <td class="env-name">GOOGLE_CLIENT_ID</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Google Cloud Console → Credentials</td>
-          </tr>
-          <tr>
-            <td class="env-name">GOOGLE_CLIENT_SECRET</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Google Cloud Console → Credentials</td>
-          </tr>
-          <tr>
-            <td class="env-name">GOOGLE_REFRESH_TOKEN</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Regenerate via OAuth Playground if expired (invalid_grant error)</td>
-          </tr>
-          <tr>
-            <td class="env-name">GMAIL_USER</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Gmail address emails are sent from</td>
-          </tr>
-          <tr>
-            <td class="env-name">BLOB_READ_WRITE_TOKEN</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Vercel Blob — for downloading PDF attachments</td>
-          </tr>
-          <tr>
-            <td class="env-name">CRON_SECRET</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Vercel sends this when running the daily cron job</td>
-          </tr>
-          <tr>
-            <td class="env-name">TYPEFORM_TOKEN</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Typeform API token</td>
-          </tr>
-          <tr>
-            <td class="env-name">WPFORMS_WEBHOOK_SECRET</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">WPForms webhook secret for signature verification</td>
-          </tr>
-          <tr>
-            <td class="env-name">META_PAGE_ACCESS_TOKEN</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Meta page access token — used to fetch lead data</td>
-          </tr>
-          <tr>
-            <td class="env-name">META_APP_SECRET</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Meta app secret — for webhook signature verification</td>
-          </tr>
-          <tr>
-            <td class="env-name">META_WEBHOOK_VERIFY_TOKEN</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Must match Meta Business Suite webhook setting</td>
-          </tr>
-          <tr>
-            <td class="env-name">KV_REST_API_URL</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Vercel KV (Redis) — auto-set when KV store is connected</td>
-          </tr>
-          <tr>
-            <td class="env-name">KV_REST_API_TOKEN</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Vercel KV — auto-set when KV store is connected</td>
-          </tr>
-          <tr>
-            <td class="env-name">KV_REST_API_READ_ONLY_TOKEN</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Vercel KV — auto-set when KV store is connected</td>
-          </tr>
-          <tr>
-            <td class="env-name">KV_REST_API_REDIS_URL</td>
-            <td><input class="env-val" type="text" placeholder="Your key here" spellcheck="false" /></td>
-            <td class="env-hint">Vercel KV — auto-set when KV store is connected</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="callout info">
-        <strong>How to add these to a new Vercel project:</strong> Vercel dashboard → the project → Settings → Environment Variables → add each variable → save → Redeploy.
       </div>
     </div>
 
