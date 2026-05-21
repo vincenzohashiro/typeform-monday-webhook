@@ -363,17 +363,22 @@
       <table>
         <thead><tr><th>Variable</th><th>What it does</th><th>How to get it</th></tr></thead>
         <tbody>
-          <tr><td><code>MONDAY_API_KEY</code></td><td>Monday.com API token — used to read &amp; update board items</td><td>Monday → Profile → Admin → API</td></tr>
-          <tr><td><code>MONDAY_BOARD_ID</code></td><td>Board 2 ID used by Typeform integration</td><td>Value: <code>5089650058</code></td></tr>
-          <tr><td><code>GOOGLE_CLIENT_ID</code></td><td>Google OAuth2 app client ID</td><td>Google Cloud Console → APIs &amp; Services → Credentials</td></tr>
+          <tr><td><code>MONDAY_API_KEY</code></td><td>Monday.com API token — reads and updates all board items</td><td>Monday → Profile → Admin → API</td></tr>
+          <tr><td><code>GOOGLE_CLIENT_ID</code></td><td>Google OAuth2 app client ID — identifies the app to Google</td><td>Google Cloud Console → APIs &amp; Services → Credentials</td></tr>
           <tr><td><code>GOOGLE_CLIENT_SECRET</code></td><td>Google OAuth2 app client secret</td><td>Google Cloud Console → APIs &amp; Services → Credentials</td></tr>
-          <tr><td><code>GOOGLE_REFRESH_TOKEN</code></td><td>OAuth2 refresh token — authorises Gmail &amp; Calendar access</td><td>Generated via OAuth Playground (see Section 11 for steps)</td></tr>
-          <tr><td><code>GMAIL_USER</code></td><td>The Gmail address emails are sent from</td><td>e.g. <code>info@haareksperten.com</code></td></tr>
-          <tr><td><code>BLOB_READ_WRITE_TOKEN</code></td><td>Authorises downloading PDFs from Vercel Blob storage</td><td>Vercel → Storage → Blob → your store → Connect to project</td></tr>
-          <tr><td><code>META_WEBHOOK_VERIFY_TOKEN</code></td><td>Secret used to verify Meta webhook registration</td><td>Any string — must match what's set in Meta Business Suite</td></tr>
-          <tr><td><code>CRON_SECRET</code></td><td>Vercel sends this when triggering the daily cron job</td><td>Any secret string — set in Vercel, auto-sent by Vercel cron</td></tr>
-          <tr><td><code>KV_REST_API_URL</code></td><td>Vercel KV (Redis) connection URL</td><td>Auto-added by Vercel when you connect a KV store</td></tr>
-          <tr><td><code>KV_REST_API_TOKEN</code></td><td>Vercel KV auth token</td><td>Auto-added by Vercel when you connect a KV store</td></tr>
+          <tr><td><code>GOOGLE_REFRESH_TOKEN</code></td><td>OAuth2 refresh token — authorises Gmail sending and Calendar access. <strong>Expires every 7 days</strong> if OAuth app is in Testing mode. Regenerate via OAuth Playground when <code>invalid_grant</code> error appears.</td><td>OAuth Playground → gmail.send + calendar scopes → exchange code for tokens</td></tr>
+          <tr><td><code>GMAIL_USER</code></td><td>The Gmail address all customer emails are sent from</td><td>e.g. <code>info@haareksperten.com</code></td></tr>
+          <tr><td><code>BLOB_READ_WRITE_TOKEN</code></td><td>Authorises downloading PDF files from Vercel Blob private storage at send time</td><td>Vercel → Storage → Blob → your store → Connect to project</td></tr>
+          <tr><td><code>CRON_SECRET</code></td><td>Vercel automatically sends this as a Bearer token when triggering the daily cron job. The function checks it to reject fake calls.</td><td>Any secret string — set in Vercel, auto-sent by Vercel cron</td></tr>
+          <tr><td><code>TYPEFORM_TOKEN</code></td><td>Typeform API token — used to authenticate with the Typeform API</td><td>Typeform → Account → Personal tokens</td></tr>
+          <tr><td><code>WPFORMS_WEBHOOK_SECRET</code></td><td>Secret used to verify that incoming WPForms webhook requests are genuine</td><td>Set any secret string here and the same one in WordPress → WPForms → Webhooks</td></tr>
+          <tr><td><code>META_PAGE_ACCESS_TOKEN</code></td><td>Meta page access token — used to call the Graph API and fetch full lead data after a lead form is submitted</td><td>Meta Business Suite → your Page → Settings → Page Access Tokens</td></tr>
+          <tr><td><code>META_APP_SECRET</code></td><td>Meta app secret — used to verify the HMAC signature on incoming webhook payloads</td><td>Meta for Developers → your App → Settings → Basic → App Secret</td></tr>
+          <tr><td><code>META_WEBHOOK_VERIFY_TOKEN</code></td><td>A secret string used during the one-time Meta webhook registration challenge</td><td>Any string — must match what's set in Meta Business Suite → Webhooks</td></tr>
+          <tr><td><code>KV_REST_API_URL</code></td><td>Vercel KV (Redis) connection URL — used for all idempotency locks and event logs</td><td>Auto-added by Vercel when you connect a KV store to the project</td></tr>
+          <tr><td><code>KV_REST_API_TOKEN</code></td><td>Vercel KV read/write auth token</td><td>Auto-added by Vercel when you connect a KV store</td></tr>
+          <tr><td><code>KV_REST_API_READ_ONLY_TOKEN</code></td><td>Vercel KV read-only token (used for safe read operations)</td><td>Auto-added by Vercel when you connect a KV store</td></tr>
+          <tr><td><code>KV_REST_API_REDIS_URL</code></td><td>Redis-compatible connection URL for the Vercel KV store</td><td>Auto-added by Vercel when you connect a KV store</td></tr>
         </tbody>
       </table>
     </div>
