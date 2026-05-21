@@ -283,6 +283,60 @@
       letter-spacing: .03em;
     }
     .reset-btn:hover { background: #ffebe6; }
+
+    .resend-btn {
+      display: inline-block;
+      margin-top: 6px;
+      background: #fff;
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      color: #172b4d;
+    }
+    .resend-btn:hover { background: #f4f5f7; }
+
+    /* ── Mobile responsiveness ────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      header { padding: 0 16px; gap: 10px; }
+      header h1 { font-size: 14px; }
+
+      .tabs {
+        padding: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .tabs::-webkit-scrollbar { display: none; }
+      .tab-btn { padding: 12px 14px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+
+      .webhook-bar { padding: 10px 16px; flex-wrap: wrap; gap: 8px; }
+      .webhook-url { flex: 1 1 100%; }
+
+      main { padding: 14px 16px 32px; }
+      .banner { margin: 14px 16px 0; }
+
+      .stats { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+      .stat { padding: 14px 16px; }
+      .stat .val { font-size: 28px; }
+
+      .board-grid { grid-template-columns: 1fr !important; }
+
+      #eventsWrap, #calEventsWrap, #metaEventsWrap,
+      #wpformsEventsWrap, #emailEventsWrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      table { min-width: 520px; }
+
+      .reset-btn, .resend-btn { min-height: 32px; padding: 5px 10px; font-size: 12px; }
+    }
+
+    @media (max-width: 480px) {
+      .stat .val { font-size: 24px; }
+      .tab-btn { padding: 11px 12px; font-size: 11px; }
+    }
   </style>
 </head>
 <body>
@@ -696,7 +750,7 @@
             <pre>${JSON.stringify(e.raw, null, 2)}</pre>
           </details>` : "";
         const resendBtn = e.raw?.length
-          ? `<button class="resend-btn" onclick="resend(${e.id})" style="margin-top:6px;font-size:11px;padding:3px 8px;border:1px solid #dfe1e6;border-radius:4px;cursor:pointer;background:#fff">↺ Resend</button>`
+          ? `<button class="resend-btn" onclick="resend(${e.id})">↺ Resend</button>`
           : "";
         return `<tr>
           <td style="white-space:nowrap;color:#5e6c84">${fmt(e.ts)}</td>
@@ -898,7 +952,7 @@
 
         const hasFields = (e.fields ?? e.raw ?? []).length > 0;
         const resendBtn = hasFields
-          ? `<button onclick="resendWpForms('${e.entryId}')" style="margin-top:6px;font-size:11px;padding:3px 8px;border:1px solid #dfe1e6;border-radius:4px;cursor:pointer;background:#fff">↺ Resend</button>`
+          ? `<button class="resend-btn" onclick="resendWpForms('${e.entryId}')">↺ Resend</button>`
           : "";
 
         const detail = e.action === "created"
