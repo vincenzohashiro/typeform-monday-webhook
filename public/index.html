@@ -850,7 +850,7 @@
   // ── Calendar tab ───────────────────────────────────────────────────────────
   async function loadCalendarEvents() {
     try {
-      const r                      = await fetch("/api/calendar-events");
+      const r                      = await fetch("/api/lead-events?tab=calendar");
       const { events, failedResetTs } = await r.json();
 
       document.getElementById("cCreated").textContent = events.filter(e => e.action === "created").length;
