@@ -40,7 +40,7 @@ export default async function handler(req, res) {
         const leadData             = await fetchLeadData(leadId);
         const { itemId, itemName, raw } = await createMondayItemFromLead(leadData);
 
-        await kv.set(`meta_lead:${leadId}`, { itemId, createdAt: new Date().toISOString() });
+        await kv.set(`meta_lead:${leadId}`, { itemId, createdAt: new Date().toISOString() }, { ex: 60 * 60 * 24 * 30 });
         await logEntry({ action: "created", leadId, itemId, itemName, raw });
       } catch (err) {
         await logEntry({ action: "error", leadId, error: err.message, code: err.code ?? "UNKNOWN" });

@@ -454,27 +454,35 @@
       <div class="board-grid" style="grid-template-columns: repeat(3, 1fr)">
         <div class="board-cell">
           <h3>Board 1 — 5052697723</h3>
-          <div class="field">Status column: <strong><span class="code">color_mm2xte1s</span></strong> (Event Creator)</div>
-          <div class="field">Date column: <strong><span class="code">date_mm0g1qqn</span></strong> (Næste opkald)</div>
-          <div class="field">Description: Telefon, Email</div>
+          <div class="field">Status column: <strong><span class="code">color_mm2xte1s</span></strong></div>
+          <div class="field">Date columns: <strong><span class="code">date_mm0g1qqn</span></strong> (Konsultation)</div>
           <div class="field">Calendar: sally@haareksperten.com</div>
-          <div class="field">Trigger: <span class="badge created">Event Created</span> &nbsp; <span class="badge deleted">Event Delete</span></div>
+          <div class="field">Trigger: <span class="badge created">Event Created</span> &nbsp; <span class="badge deleted">Event Deleted</span></div>
         </div>
         <div class="board-cell">
           <h3>Board 2 — 5089650058</h3>
-          <div class="field">Status column: <strong><span class="code">color_mm2xkj25</span></strong> (Event Creator)</div>
-          <div class="field">Date column: <strong><span class="code">date_mkzancw6</span></strong> (Næste opkald)</div>
-          <div class="field">Description: Email, Telefonnummer</div>
+          <div class="field">Status column: <strong><span class="code">color_mm2xkj25</span></strong></div>
+          <div class="field">Date columns (7):<br>
+            <span class="code">date_mkzancw6</span> Næste opkald<br>
+            <span class="code">date_mkzn7ahe</span> Konsultationsdag<br>
+            <span class="code">date_mkzn13a9</span> Ankomstdato<br>
+            <span class="code">date_mkznkt4c</span> Operationsdag<br>
+            <span class="code">datewtur8fqa</span> Ankomstdato og -tid<br>
+            <span class="code">date4oq7pl6n</span> Operationsdato<br>
+            <span class="code">datet2v5h8xu</span> Hjemrejsedato og -tid
+          </div>
           <div class="field">Calendar: zari@haareksperten.com</div>
-          <div class="field">Trigger: <span class="badge created">Event Created</span> &nbsp; <span class="badge deleted">Event Delete</span></div>
+          <div class="field">Trigger: <span class="badge created">Event Created</span> &nbsp; <span class="badge deleted">Event Deleted</span></div>
         </div>
         <div class="board-cell">
           <h3>Board 3 — 5052958230</h3>
-          <div class="field">Status column: <strong><span class="code">color_mm2xy0y7</span></strong> (Event Creator)</div>
-          <div class="field">Date column: <strong><span class="code">date_mkxmb3rn</span></strong> (Operationsdato)</div>
-          <div class="field">Description: Telefon, Email</div>
+          <div class="field">Status column: <strong><span class="code">color_mm2xy0y7</span></strong></div>
+          <div class="field">Date columns (2):<br>
+            <span class="code">date_mkxmb3rn</span> Operationsdato<br>
+            <span class="code">datezf1ogftx</span> Hjemrejsedato og -tid
+          </div>
           <div class="field">Calendar: info@haareksperten.com</div>
-          <div class="field">Trigger: <span class="badge created">Event Created</span> &nbsp; <span class="badge deleted">Event Delete</span></div>
+          <div class="field">Trigger: <span class="badge created">Event Created</span> &nbsp; <span class="badge deleted">Event Deleted</span></div>
         </div>
       </div>
     </div>
@@ -647,6 +655,8 @@
     if      (tab === "typeform") loadEvents();
     else if (tab === "calendar") loadCalendarEvents();
     else if (tab === "meta")     loadMetaEvents();
+    else if (tab === "wpforms")  loadWpformsEvents();
+    else if (tab === "email")    loadEmailEvents();
   }
 
   // ── Webhook URLs ───────────────────────────────────────────────────────────
@@ -836,20 +846,26 @@
       const BOARD_NAMES = { "5052697723": "Board 1", "5089650058": "Board 2", "5052958230": "Board 3" };
 
       const actionBadge = a => ({
-        created: `<span class="badge created">Created</span>`,
-        updated: `<span class="badge updated">Updated</span>`,
-        deleted: `<span class="badge deleted">Deleted</span>`,
-        error:   `<span class="badge err">Error</span>`,
+        created:      `<span class="badge created">Created</span>`,
+        auto_created: `<span class="badge created">Auto-created</span>`,
+        updated:      `<span class="badge updated">Updated</span>`,
+        deduplicated: `<span class="badge updated">Deduplicated</span>`,
+        deleted:      `<span class="badge deleted">Deleted</span>`,
+        cleared:      `<span class="badge deleted">Cleared</span>`,
+        stale_cleared:`<span class="badge deleted">Stale cleared</span>`,
+        error:        `<span class="badge err">Error</span>`,
       }[a] ?? `<span class="badge">${a}</span>`);
 
-      const rows = events.map(e => `
-        <tr>
+      const rows = events.map(e => {
+        const colLabel = e.columnLabel ? `<br><span class="muted">${e.columnLabel}</span>` : "";
+        return `<tr>
           <td style="white-space:nowrap;color:#5e6c84">${fmt(e.ts)}</td>
-          <td><strong>${e.itemName || "—"}</strong><br><span class="code">#${e.itemId}</span></td>
+          <td><strong>${e.itemName || "—"}</strong><br><span class="code">#${e.itemId}</span>${colLabel}</td>
           <td>${actionBadge(e.action)}</td>
           <td>${BOARD_NAMES[e.boardId] ?? e.boardId}</td>
           <td>${e.eventId ? `<span class="code">${e.eventId.slice(0, 20)}…</span>` : e.error ? `<span class="detail" style="color:#de350b">${e.error}</span>` : "—"}</td>
-        </tr>`).join("");
+        </tr>`;
+      }).join("");
 
       wrap.innerHTML = `
         <table>

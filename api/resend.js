@@ -82,7 +82,6 @@ export default async function handler(req, res) {
 
   // ── Typeform resend (existing logic) ───────────────────────────────────────
   if (!eventId) return res.status(400).json({ error: "eventId required" });
-  if (!eventId) return res.status(400).json({ error: "eventId required" });
 
   // Find the stored event
   const all    = await kv.lrange("events", 0, 299);
