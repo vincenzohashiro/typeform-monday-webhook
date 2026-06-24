@@ -354,6 +354,7 @@
   <button class="tab-btn"        onclick="switchTab('meta', this)">Meta Leads</button>
   <button class="tab-btn"        onclick="switchTab('wpforms', this)">WPForms → Monday</button>
   <button class="tab-btn"        onclick="switchTab('email', this)">Email Sent</button>
+  <button class="tab-btn"        onclick="switchTab('health', this)">System Health</button>
 </nav>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
@@ -627,6 +628,26 @@
   </main>
 </div>
 
+<!-- ══════════════════════════════════════════════════════════════════════════
+     TAB 6 — System Health
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-health" class="tab-panel">
+  <main>
+    <div class="card">
+      <div class="card-head">
+        <h2>System Health Check</h2>
+        <button class="refresh-btn" onclick="loadHealth()">Run check</button>
+      </div>
+      <div id="healthWrap">
+        <div class="empty">
+          <strong>Click "Run check" to test all integrations</strong>
+          Tests Monday API, Google OAuth, Gmail, Calendar, KV, Blob storage, and Meta credentials.
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
 <script>
   // ── Tab switching ──────────────────────────────────────────────────────────
   let currentTab = "typeform";
@@ -648,6 +669,7 @@
     else if (currentTab === "meta")     loadMetaEvents().finally(done);
     else if (currentTab === "wpforms")  loadWpformsEvents().finally(done);
     else if (currentTab === "email")    loadEmailEvents().finally(done);
+    else if (currentTab === "health")   loadHealth().finally(done);
   }
 
   async function resetFailed(tab) {
@@ -1075,6 +1097,45 @@
       btn.textContent = "Failed";
       btn.disabled = false;
       alert("Resend failed: " + e.message);
+    }
+  }
+
+  // ── Health tab ─────────────────────────────────────────────────────────────
+  async function loadHealth() {
+    const wrap = document.getElementById("healthWrap");
+    wrap.innerHTML = `<div class="empty"><strong>Running checks…</strong></div>`;
+    try {
+      const r = await fetch("/api/health");
+      const { ok, checks } = await r.json();
+
+      const row = (name, label, c) => {
+        const badge = c.ok
+          ? `<span class="badge ok">OK</span>`
+          : `<span class="badge err">FAIL</span>`;
+        const detail = c.ok
+          ? `<span class="muted">${c.user || c.email || (c.calendars ?? []).join(", ") || "Connected"}</span>`
+          : `<span class="detail" style="color:#de350b">${c.error}</span>`;
+        return `<tr><td style="font-weight:600">${label}</td><td>${badge}</td><td>${detail}</td></tr>`;
+      };
+
+      wrap.innerHTML = `
+        <table>
+          <thead><tr><th>Service</th><th>Status</th><th>Details</th></tr></thead>
+          <tbody>
+            ${row("monday", "Monday API", checks.monday)}
+            ${row("google", "Google OAuth", checks.google)}
+            ${row("gmail", "Gmail (send)", checks.gmail)}
+            ${row("calendar", "Google Calendar", checks.calendar)}
+            ${row("kv", "Vercel KV", checks.kv)}
+            ${row("blob", "Blob Storage", checks.blob)}
+            ${row("meta", "Meta / Facebook", checks.meta)}
+          </tbody>
+        </table>
+        <div style="padding:12px 16px;font-size:12px;color:#5e6c84">
+          Overall: ${ok ? '<strong style="color:#36b37e">All systems operational</strong>' : '<strong style="color:#de350b">Some checks failed — see details above</strong>'}
+        </div>`;
+    } catch (e) {
+      wrap.innerHTML = `<div class="empty"><strong>Health check failed</strong>${e.message}</div>`;
     }
   }
 
