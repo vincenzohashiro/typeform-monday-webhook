@@ -29,27 +29,27 @@ export default async function handler(req, res) {
     for (const boardId of allBoardIds) {
       // List existing webhooks for this board
       try {
-        const data = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id board_id url event } }`, { boardId });
+        const data = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id board_id target_url event } }`, { boardId });
         const existing = data.webhooks ?? [];
 
         // Delete webhooks pointing to wrong URLs
         for (const wh of existing) {
-          const isOurs = wh.url.includes("calendar-webhook") || wh.url.includes("monday-email");
-          const isWrongDomain = isOurs && !wh.url.startsWith(baseUrl);
+          const isOurs = wh.target_url.includes("calendar-webhook") || wh.target_url.includes("monday-email");
+          const isWrongDomain = isOurs && !wh.target_url.startsWith(baseUrl);
           if (isWrongDomain) {
             await mondayAPI(`mutation ($id: ID!) { delete_webhook(id: $id) { id } }`, { id: wh.id });
-            results.push({ action: "deleted", boardId, url: wh.url, webhookId: wh.id });
+            results.push({ action: "deleted", boardId, url: wh.target_url, webhookId: wh.id });
           }
         }
 
         // Re-check what's left after deletion
-        const afterData = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id url } }`, { boardId });
+        const afterData = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id target_url } }`, { boardId });
         const remaining = afterData.webhooks ?? [];
 
         // Create calendar webhook if board is in BOARDS config
         if (BOARDS[boardId]) {
           const calUrl = `${baseUrl}/api/calendar-webhook`;
-          const hasCalendar = remaining.some(w => w.url === calUrl);
+          const hasCalendar = remaining.some(w => w.target_url === calUrl);
           if (!hasCalendar) {
             const d = await mondayAPI(
               `mutation ($boardId: ID!, $url: String!) { create_webhook(board_id: $boardId, url: $url, event: change_column_value) { id board_id } }`,
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
         // Create email webhook if board is in EMAIL config
         if (BOARD_EMAIL_CONFIG[boardId]) {
           const emailUrl = `${baseUrl}/api/monday-email`;
-          const hasEmail = remaining.some(w => w.url === emailUrl);
+          const hasEmail = remaining.some(w => w.target_url === emailUrl);
           if (!hasEmail) {
             const d = await mondayAPI(
               `mutation ($boardId: ID!, $url: String!) { create_webhook(board_id: $boardId, url: $url, event: change_column_value) { id board_id } }`,
@@ -203,16 +203,16 @@ async function testWebhooks() {
 
   try {
     for (const boardId of allBoardIds) {
-      const data = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id url event } }`, { boardId });
+      const data = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id target_url event } }`, { boardId });
       const webhooks = data.webhooks ?? [];
 
-      const hasCalendar = BOARDS[boardId] && webhooks.some(w => w.url === `${correctBase}/api/calendar-webhook`);
-      const hasEmail = BOARD_EMAIL_CONFIG[boardId] && webhooks.some(w => w.url === `${correctBase}/api/monday-email`);
-      const wrongUrls = webhooks.filter(w => (w.url.includes("calendar-webhook") || w.url.includes("monday-email")) && !w.url.startsWith(correctBase));
+      const hasCalendar = BOARDS[boardId] && webhooks.some(w => w.target_url === `${correctBase}/api/calendar-webhook`);
+      const hasEmail = BOARD_EMAIL_CONFIG[boardId] && webhooks.some(w => w.target_url === `${correctBase}/api/monday-email`);
+      const wrongUrls = webhooks.filter(w => (w.target_url.includes("calendar-webhook") || w.target_url.includes("monday-email")) && !w.target_url.startsWith(correctBase));
 
       if (BOARDS[boardId] && !hasCalendar) issues.push(`Board ${boardId}: missing calendar webhook`);
       if (BOARD_EMAIL_CONFIG[boardId] && !hasEmail) issues.push(`Board ${boardId}: missing email webhook`);
-      for (const w of wrongUrls) issues.push(`Board ${boardId}: wrong URL → ${w.url}`);
+      for (const w of wrongUrls) issues.push(`Board ${boardId}: wrong URL → ${w.target_url}`);
     }
 
     if (issues.length) return { ok: false, error: issues.join("; ") };
