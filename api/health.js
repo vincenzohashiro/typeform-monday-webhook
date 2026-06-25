@@ -20,16 +20,10 @@ export default async function handler(req, res) {
     const token = process.env.MONDAY_API_KEY;
     if (!token) return res.status(500).json({ error: "MONDAY_API_KEY not set" });
     try {
-      const data = await mondayAPI(`{ webhooks(board_id: 5089650058) { __typename } }`);
-      return res.json({ data });
+      const schema = await mondayAPI(`{ __type(name: "Webhook") { fields { name } } }`);
+      return res.json(schema);
     } catch (e) {
-      // Introspect the Webhook type fields
-      try {
-        const schema = await mondayAPI(`{ __type(name: "Webhook") { fields { name type { name kind } } } }`);
-        return res.json({ schema });
-      } catch (e2) {
-        return res.json({ error: e.message, schemaError: e2.message });
-      }
+      return res.json({ error: e.message });
     }
   }
 
