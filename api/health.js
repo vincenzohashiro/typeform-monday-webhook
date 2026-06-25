@@ -16,17 +16,6 @@ async function mondayAPI(query, variables = {}) {
 
 export default async function handler(req, res) {
   // POST: register Monday webhooks (?action=setup) or introspect (?action=schema)
-  if (req.method === "POST" && req.query.action === "schema") {
-    const token = process.env.MONDAY_API_KEY;
-    if (!token) return res.status(500).json({ error: "MONDAY_API_KEY not set" });
-    try {
-      const schema = await mondayAPI(`{ __type(name: "Webhook") { fields { name } } }`);
-      return res.json(schema);
-    } catch (e) {
-      return res.json({ error: e.message });
-    }
-  }
-
   if (req.method === "POST") {
     const token = process.env.MONDAY_API_KEY;
     if (!token) return res.status(500).json({ error: "MONDAY_API_KEY not set" });
@@ -34,57 +23,35 @@ export default async function handler(req, res) {
     const baseUrl = `https://typeform-monday-webhook.vercel.app`;
     const results = [];
 
-    // Collect all board IDs from both configs
     const allBoardIds = new Set([...Object.keys(BOARDS), ...Object.keys(BOARD_EMAIL_CONFIG)]);
 
     for (const boardId of allBoardIds) {
-      // List existing webhooks for this board
       try {
-        const data = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id board_id target_url event } }`, { boardId });
-        const existing = data.webhooks ?? [];
-
-        // Delete webhooks pointing to wrong URLs
-        for (const wh of existing) {
-          const isOurs = wh.target_url.includes("calendar-webhook") || wh.target_url.includes("monday-email");
-          const isWrongDomain = isOurs && !wh.target_url.startsWith(baseUrl);
-          if (isWrongDomain) {
-            await mondayAPI(`mutation ($id: ID!) { delete_webhook(id: $id) { id } }`, { id: wh.id });
-            results.push({ action: "deleted", boardId, url: wh.target_url, webhookId: wh.id });
-          }
+        // Delete ALL existing webhooks on this board (API 2025-01 doesn't expose URLs, so we can't filter)
+        const data = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id } }`, { boardId });
+        for (const wh of data.webhooks ?? []) {
+          await mondayAPI(`mutation ($id: ID!) { delete_webhook(id: $id) { id } }`, { id: wh.id });
+          results.push({ action: "deleted", boardId, webhookId: wh.id });
         }
-
-        // Re-check what's left after deletion
-        const afterData = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id target_url } }`, { boardId });
-        const remaining = afterData.webhooks ?? [];
 
         // Create calendar webhook if board is in BOARDS config
         if (BOARDS[boardId]) {
           const calUrl = `${baseUrl}/api/calendar-webhook`;
-          const hasCalendar = remaining.some(w => w.target_url === calUrl);
-          if (!hasCalendar) {
-            const d = await mondayAPI(
-              `mutation ($boardId: ID!, $url: String!) { create_webhook(board_id: $boardId, url: $url, event: change_column_value) { id board_id } }`,
-              { boardId: Number(boardId), url: calUrl }
-            );
-            results.push({ action: "created", boardId, url: calUrl, webhookId: d.create_webhook.id });
-          } else {
-            results.push({ action: "exists", boardId, url: calUrl });
-          }
+          const d = await mondayAPI(
+            `mutation ($boardId: ID!, $url: String!) { create_webhook(board_id: $boardId, url: $url, event: change_column_value) { id board_id } }`,
+            { boardId: Number(boardId), url: calUrl }
+          );
+          results.push({ action: "created", boardId, url: calUrl, webhookId: d.create_webhook.id });
         }
 
         // Create email webhook if board is in EMAIL config
         if (BOARD_EMAIL_CONFIG[boardId]) {
           const emailUrl = `${baseUrl}/api/monday-email`;
-          const hasEmail = remaining.some(w => w.target_url === emailUrl);
-          if (!hasEmail) {
-            const d = await mondayAPI(
-              `mutation ($boardId: ID!, $url: String!) { create_webhook(board_id: $boardId, url: $url, event: change_column_value) { id board_id } }`,
-              { boardId: Number(boardId), url: emailUrl }
-            );
-            results.push({ action: "created", boardId, url: emailUrl, webhookId: d.create_webhook.id });
-          } else {
-            results.push({ action: "exists", boardId, url: emailUrl });
-          }
+          const d = await mondayAPI(
+            `mutation ($boardId: ID!, $url: String!) { create_webhook(board_id: $boardId, url: $url, event: change_column_value) { id board_id } }`,
+            { boardId: Number(boardId), url: emailUrl }
+          );
+          results.push({ action: "created", boardId, url: emailUrl, webhookId: d.create_webhook.id });
         }
       } catch (e) {
         results.push({ action: "error", boardId, error: e.message });
@@ -208,26 +175,22 @@ async function testWebhooks() {
   const token = process.env.MONDAY_API_KEY;
   if (!token) return { ok: false, error: "MONDAY_API_KEY not set" };
 
-  const correctBase = "https://typeform-monday-webhook.vercel.app";
   const allBoardIds = [...new Set([...Object.keys(BOARDS), ...Object.keys(BOARD_EMAIL_CONFIG)])];
   const issues = [];
 
   try {
     for (const boardId of allBoardIds) {
-      const data = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id target_url event } }`, { boardId });
+      const data = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id event } }`, { boardId });
       const webhooks = data.webhooks ?? [];
-
-      const hasCalendar = BOARDS[boardId] && webhooks.some(w => w.target_url === `${correctBase}/api/calendar-webhook`);
-      const hasEmail = BOARD_EMAIL_CONFIG[boardId] && webhooks.some(w => w.target_url === `${correctBase}/api/monday-email`);
-      const wrongUrls = webhooks.filter(w => (w.target_url.includes("calendar-webhook") || w.target_url.includes("monday-email")) && !w.target_url.startsWith(correctBase));
-
-      if (BOARDS[boardId] && !hasCalendar) issues.push(`Board ${boardId}: missing calendar webhook`);
-      if (BOARD_EMAIL_CONFIG[boardId] && !hasEmail) issues.push(`Board ${boardId}: missing email webhook`);
-      for (const w of wrongUrls) issues.push(`Board ${boardId}: wrong URL → ${w.target_url}`);
+      const needed = (BOARDS[boardId] ? 1 : 0) + (BOARD_EMAIL_CONFIG[boardId] ? 1 : 0);
+      const colValueHooks = webhooks.filter(w => w.event === "change_column_value");
+      if (colValueHooks.length < needed) {
+        issues.push(`Board ${boardId}: has ${colValueHooks.length} webhook(s), needs ${needed}. Run "Fix webhooks".`);
+      }
     }
 
     if (issues.length) return { ok: false, error: issues.join("; ") };
-    return { ok: true };
+    return { ok: true, detail: `${allBoardIds.length} boards checked` };
   } catch (e) {
     return { ok: false, error: e.message };
   }
