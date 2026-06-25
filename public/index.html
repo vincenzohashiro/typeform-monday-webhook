@@ -641,7 +641,19 @@
       <div id="healthWrap">
         <div class="empty">
           <strong>Click "Run check" to test all integrations</strong>
-          Tests Monday API, Google OAuth, Gmail, Calendar, KV, Blob storage, and Meta credentials.
+          Tests Monday API, Google OAuth, Gmail, Calendar, KV, Blob storage, Meta, and Monday webhooks.
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <h2>Monday Webhooks</h2>
+        <button class="refresh-btn" id="fixWebhooksBtn" onclick="fixWebhooks()">Fix webhooks</button>
+      </div>
+      <div id="webhookSetupWrap">
+        <div class="empty">
+          <strong>Run "Fix webhooks" to register all Monday webhooks</strong>
+          Deletes webhooks pointing to wrong URLs and creates new ones on the correct domain.
         </div>
       </div>
     </div>
@@ -1129,6 +1141,7 @@
             ${row("kv", "Vercel KV", checks.kv)}
             ${row("blob", "Blob Storage", checks.blob)}
             ${row("meta", "Meta / Facebook", checks.meta)}
+            ${row("webhooks", "Monday Webhooks", checks.webhooks)}
           </tbody>
         </table>
         <div style="padding:12px 16px;font-size:12px;color:#5e6c84">
@@ -1137,6 +1150,39 @@
     } catch (e) {
       wrap.innerHTML = `<div class="empty"><strong>Health check failed</strong>${e.message}</div>`;
     }
+  }
+
+  async function fixWebhooks() {
+    const btn = document.getElementById("fixWebhooksBtn");
+    const wrap = document.getElementById("webhookSetupWrap");
+    btn.textContent = "Setting up…";
+    btn.disabled = true;
+    try {
+      const r = await fetch("/api/health", { method: "POST" });
+      const { ok, results } = await r.json();
+
+      const rows = results.map(r => {
+        const badge = r.action === "created" ? `<span class="badge created">Created</span>`
+          : r.action === "deleted" ? `<span class="badge deleted">Deleted old</span>`
+          : r.action === "exists" ? `<span class="badge updated">Already OK</span>`
+          : `<span class="badge err">Error</span>`;
+        const detail = r.error ?? r.url ?? "";
+        return `<tr><td>${r.boardId}</td><td>${badge}</td><td style="font-size:12px">${detail}</td></tr>`;
+      }).join("");
+
+      wrap.innerHTML = `
+        <table>
+          <thead><tr><th>Board</th><th>Action</th><th>Details</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div style="padding:12px 16px;font-size:12px;color:#5e6c84">
+          ${ok ? '<strong style="color:#36b37e">All webhooks configured</strong>' : 'Check results above'}
+        </div>`;
+    } catch (e) {
+      wrap.innerHTML = `<div class="empty"><strong>Setup failed</strong>${e.message}</div>`;
+    }
+    btn.textContent = "Fix webhooks";
+    btn.disabled = false;
   }
 
   // ── Boot ───────────────────────────────────────────────────────────────────

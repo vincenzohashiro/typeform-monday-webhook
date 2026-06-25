@@ -1,30 +1,102 @@
 import { google } from "googleapis";
+import { BOARDS } from "../lib/calendarBoards.js";
+import { BOARD_EMAIL_CONFIG } from "../lib/emailConfig.js";
+
+async function mondayAPI(query, variables = {}) {
+  const token = process.env.MONDAY_API_KEY;
+  const r = await fetch("https://api.monday.com/v2", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: token, "API-Version": "2025-01" },
+    body: JSON.stringify({ query, variables }),
+  });
+  const json = await r.json();
+  if (json.errors?.length) throw new Error(json.errors[0].message);
+  return json.data;
+}
 
 export default async function handler(req, res) {
+  // POST: register Monday webhooks
+  if (req.method === "POST") {
+    const token = process.env.MONDAY_API_KEY;
+    if (!token) return res.status(500).json({ error: "MONDAY_API_KEY not set" });
+
+    const baseUrl = `https://typeform-monday-webhook.vercel.app`;
+    const results = [];
+
+    // Collect all board IDs from both configs
+    const allBoardIds = new Set([...Object.keys(BOARDS), ...Object.keys(BOARD_EMAIL_CONFIG)]);
+
+    for (const boardId of allBoardIds) {
+      // List existing webhooks for this board
+      try {
+        const data = await mondayAPI(`query ($boardId: ID!) { boards(ids: [$boardId]) { webhooks { id board_id url event } } }`, { boardId });
+        const existing = data.boards?.[0]?.webhooks ?? [];
+
+        // Delete webhooks pointing to wrong URLs
+        for (const wh of existing) {
+          const isOurs = wh.url.includes("calendar-webhook") || wh.url.includes("monday-email");
+          const isWrongDomain = isOurs && !wh.url.startsWith(baseUrl);
+          if (isWrongDomain) {
+            await mondayAPI(`mutation ($id: ID!) { delete_webhook(id: $id) { id } }`, { id: wh.id });
+            results.push({ action: "deleted", boardId, url: wh.url, webhookId: wh.id });
+          }
+        }
+
+        // Re-check what's left after deletion
+        const afterData = await mondayAPI(`query ($boardId: ID!) { boards(ids: [$boardId]) { webhooks { id url } } }`, { boardId });
+        const remaining = afterData.boards?.[0]?.webhooks ?? [];
+
+        // Create calendar webhook if board is in BOARDS config
+        if (BOARDS[boardId]) {
+          const calUrl = `${baseUrl}/api/calendar-webhook`;
+          const hasCalendar = remaining.some(w => w.url === calUrl);
+          if (!hasCalendar) {
+            const d = await mondayAPI(
+              `mutation ($boardId: ID!, $url: String!) { create_webhook(board_id: $boardId, url: $url, event: change_column_value) { id board_id } }`,
+              { boardId: Number(boardId), url: calUrl }
+            );
+            results.push({ action: "created", boardId, url: calUrl, webhookId: d.create_webhook.id });
+          } else {
+            results.push({ action: "exists", boardId, url: calUrl });
+          }
+        }
+
+        // Create email webhook if board is in EMAIL config
+        if (BOARD_EMAIL_CONFIG[boardId]) {
+          const emailUrl = `${baseUrl}/api/monday-email`;
+          const hasEmail = remaining.some(w => w.url === emailUrl);
+          if (!hasEmail) {
+            const d = await mondayAPI(
+              `mutation ($boardId: ID!, $url: String!) { create_webhook(board_id: $boardId, url: $url, event: change_column_value) { id board_id } }`,
+              { boardId: Number(boardId), url: emailUrl }
+            );
+            results.push({ action: "created", boardId, url: emailUrl, webhookId: d.create_webhook.id });
+          } else {
+            results.push({ action: "exists", boardId, url: emailUrl });
+          }
+        }
+      } catch (e) {
+        results.push({ action: "error", boardId, error: e.message });
+      }
+    }
+
+    return res.json({ ok: true, results });
+  }
+
   if (req.method !== "GET") return res.status(405).end();
 
   const checks = {};
 
-  // 1. Monday API
   checks.monday = await testMonday();
-
-  // 2. Google OAuth (shared by Calendar + Gmail)
   checks.google = await testGoogle();
-
-  // 3. Gmail send capability
   checks.gmail = await testGmail(checks.google.auth);
-
-  // 4. Google Calendar access
   checks.calendar = await testCalendar(checks.google.auth);
-
-  // 5. Vercel KV
   checks.kv = await testKV();
-
-  // 6. Blob storage
   checks.blob = await testBlob();
-
-  // 7. Meta
   checks.meta = testMeta();
+
+  // Check Monday webhooks
+  checks.webhooks = await testWebhooks();
 
   const allOk = Object.values(checks).every(c => c.ok);
   res.json({ ok: allOk, checks });
@@ -119,4 +191,33 @@ function testMeta() {
   if (!token) return { ok: false, error: "META_PAGE_ACCESS_TOKEN not set" };
   if (!verify) return { ok: false, error: "META_WEBHOOK_VERIFY_TOKEN not set" };
   return { ok: true };
+}
+
+async function testWebhooks() {
+  const token = process.env.MONDAY_API_KEY;
+  if (!token) return { ok: false, error: "MONDAY_API_KEY not set" };
+
+  const correctBase = "https://typeform-monday-webhook.vercel.app";
+  const allBoardIds = [...new Set([...Object.keys(BOARDS), ...Object.keys(BOARD_EMAIL_CONFIG)])];
+  const issues = [];
+
+  try {
+    for (const boardId of allBoardIds) {
+      const data = await mondayAPI(`query ($boardId: ID!) { boards(ids: [$boardId]) { webhooks { id url event } } }`, { boardId });
+      const webhooks = data.boards?.[0]?.webhooks ?? [];
+
+      const hasCalendar = BOARDS[boardId] && webhooks.some(w => w.url === `${correctBase}/api/calendar-webhook`);
+      const hasEmail = BOARD_EMAIL_CONFIG[boardId] && webhooks.some(w => w.url === `${correctBase}/api/monday-email`);
+      const wrongUrls = webhooks.filter(w => (w.url.includes("calendar-webhook") || w.url.includes("monday-email")) && !w.url.startsWith(correctBase));
+
+      if (BOARDS[boardId] && !hasCalendar) issues.push(`Board ${boardId}: missing calendar webhook`);
+      if (BOARD_EMAIL_CONFIG[boardId] && !hasEmail) issues.push(`Board ${boardId}: missing email webhook`);
+      for (const w of wrongUrls) issues.push(`Board ${boardId}: wrong URL → ${w.url}`);
+    }
+
+    if (issues.length) return { ok: false, error: issues.join("; ") };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
 }
