@@ -29,8 +29,8 @@ export default async function handler(req, res) {
     for (const boardId of allBoardIds) {
       // List existing webhooks for this board
       try {
-        const data = await mondayAPI(`query ($boardId: ID!) { boards(ids: [$boardId]) { webhooks { id board_id url event } } }`, { boardId });
-        const existing = data.boards?.[0]?.webhooks ?? [];
+        const data = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id board_id url event } }`, { boardId });
+        const existing = data.webhooks ?? [];
 
         // Delete webhooks pointing to wrong URLs
         for (const wh of existing) {
@@ -43,8 +43,8 @@ export default async function handler(req, res) {
         }
 
         // Re-check what's left after deletion
-        const afterData = await mondayAPI(`query ($boardId: ID!) { boards(ids: [$boardId]) { webhooks { id url } } }`, { boardId });
-        const remaining = afterData.boards?.[0]?.webhooks ?? [];
+        const afterData = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id url } }`, { boardId });
+        const remaining = afterData.webhooks ?? [];
 
         // Create calendar webhook if board is in BOARDS config
         if (BOARDS[boardId]) {
@@ -203,8 +203,8 @@ async function testWebhooks() {
 
   try {
     for (const boardId of allBoardIds) {
-      const data = await mondayAPI(`query ($boardId: ID!) { boards(ids: [$boardId]) { webhooks { id url event } } }`, { boardId });
-      const webhooks = data.boards?.[0]?.webhooks ?? [];
+      const data = await mondayAPI(`query ($boardId: ID!) { webhooks(board_id: $boardId) { id url event } }`, { boardId });
+      const webhooks = data.webhooks ?? [];
 
       const hasCalendar = BOARDS[boardId] && webhooks.some(w => w.url === `${correctBase}/api/calendar-webhook`);
       const hasEmail = BOARD_EMAIL_CONFIG[boardId] && webhooks.some(w => w.url === `${correctBase}/api/monday-email`);
