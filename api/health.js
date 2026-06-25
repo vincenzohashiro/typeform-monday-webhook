@@ -15,7 +15,24 @@ async function mondayAPI(query, variables = {}) {
 }
 
 export default async function handler(req, res) {
-  // POST: register Monday webhooks
+  // POST: register Monday webhooks (?action=setup) or introspect (?action=schema)
+  if (req.method === "POST" && req.query.action === "schema") {
+    const token = process.env.MONDAY_API_KEY;
+    if (!token) return res.status(500).json({ error: "MONDAY_API_KEY not set" });
+    try {
+      const data = await mondayAPI(`{ webhooks(board_id: 5089650058) { __typename } }`);
+      return res.json({ data });
+    } catch (e) {
+      // Introspect the Webhook type fields
+      try {
+        const schema = await mondayAPI(`{ __type(name: "Webhook") { fields { name type { name kind } } } }`);
+        return res.json({ schema });
+      } catch (e2) {
+        return res.json({ error: e.message, schemaError: e2.message });
+      }
+    }
+  }
+
   if (req.method === "POST") {
     const token = process.env.MONDAY_API_KEY;
     if (!token) return res.status(500).json({ error: "MONDAY_API_KEY not set" });
